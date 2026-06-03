@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诊疗记录 - 医生工作台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f7f4; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .header-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .header h1 { font-size: 20px; }
+        .header-right a { color: white; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 6px; }
+        .header-right a:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+        .breadcrumb { color: #666; font-size: 14px; margin-bottom: 16px; }
+        .breadcrumb a { color: #00b894; text-decoration: none; }
+        .content { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f8f8; color: #555; font-weight: 600; font-size: 14px; }
+        td { font-size: 14px; }
+        .btn-sm { padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: none; background: #00b894; color: white; }
+        .btn-sm:hover { background: #019a7c; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #fce4ec; color: #c62828; }
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .pagination a { padding: 8px 14px; border-radius: 6px; background: #e0e0e0; color: #333; text-decoration: none; }
+        .pagination a.active { background: #00b894; color: white; }
+        .empty-state { text-align: center; padding: 40px; color: #999; }
+        .diag { color: #00b894; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <h1>👨‍⚕️ 医生工作台</h1>
+            <div class="header-right">
+                <a href="/doctor/dashboard">📊 仪表板</a>
+                <a href="/logout">🚪 退出</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="breadcrumb"><a href="/doctor/dashboard">← 返回仪表板</a></div>
+        <h2 style="margin-bottom:16px;">📋 诊疗记录</h2>
+        <div class="content">
+            <div th:if="${!#lists.isEmpty(records)}">
+                <table><thead><tr><th>序号</th><th>患者姓名</th><th>联系电话</th><th>预约日期</th><th>预约时间</th><th>状态</th><th>诊疗信息</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr th:each="r,iter : ${records}">
+                            <td th:text="${iter.count}">1</td>
+                            <td th:text="${r.patientName.contains('|') ? r.patientName.substring(0, r.patientName.indexOf('|')) : r.patientName}"></td>
+                            <td th:text="${r.patientPhone}"></td>
+                            <td th:text="${r.appointmentDate}"></td>
+                            <td th:text="${r.appointmentTime}"></td>
+                            <td>
+                                <span th:if="${r.status == '待就诊'}" class="status-badge status-pending">待就诊</span>
+                                <span th:if="${r.status == '已完成'}" class="status-badge status-completed">已完成</span>
+                                <span th:if="${r.status == '已取消'}" class="status-badge status-cancelled">已取消</span>
+                            </td>
+                            <td>
+                                <span th:if="${r.patientName.contains('|')}" class="diag" th:text="${r.patientName.substring(r.patientName.indexOf('|') + 1)}"></span>
+                                <span th:unless="${r.patientName.contains('|')}" style="color:#999;">未录入</span>
+                            </td>
+                            <td><a th:if="${r.status != '已取消' and r.status != '已完成'}" th:href="@{/doctor/record/edit(id=${r.id})}" class="btn-sm">✏️ 诊疗</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="pagination" th:if="${recordsPage.totalPages > 1}">
+                    <a th:each="i : ${#numbers.sequence(0, recordsPage.totalPages - 1)}"
+                       th:href="@{/doctor/records(page=${i})}"
+                       th:text="${i + 1}"
+                       th:classappend="${i == recordsPage.number ? 'active' : ''}"></a>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(records)}" class="empty-state">暂无诊疗记录</div>
+        </div>
+    </div>
+</body>
+</html>

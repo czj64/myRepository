@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - 医生工作台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f7f4; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .header-inner { max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .header h1 { font-size: 20px; }
+        .header-right a { color: white; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 6px; }
+        .header-right a:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px 24px; }
+        .breadcrumb { color: #666; font-size: 14px; margin-bottom: 16px; }
+        .breadcrumb a { color: #00b894; text-decoration: none; }
+        .content { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .profile-header { text-align: center; margin-bottom: 30px; }
+        .avatar { width: 80px; height: 80px; background: #00b894; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; color: white; }
+        .info-card { background: #f8fdfb; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00b894; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e8e8e8; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #888; }
+        .info-value { color: #333; font-weight: 500; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; color: #333; font-weight: 500; }
+        .form-group input { width: 100%; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; }
+        .form-group input:focus { outline: none; border-color: #00b894; }
+        .btn { padding: 12px 32px; background: #00b894; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn:hover { background: #019a7c; }
+        .error { background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+        .success { background: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <h1>👨‍⚕️ 医生工作台</h1>
+            <div class="header-right">
+                <a href="/doctor/dashboard">📊 仪表板</a>
+                <a href="/logout">🚪 退出</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="breadcrumb"><a href="/doctor/dashboard">← 返回仪表板</a></div>
+        <div class="content">
+            <div class="profile-header">
+                <div class="avatar">👨‍⚕️</div>
+                <h2 style="margin-top:12px;" th:text="${doctorInfo.name}"></h2>
+                <p style="color:#666;" th:text="${doctorInfo.title} + ' | ' + ${doctorInfo.department.name}"></p>
+            </div>
+            <div class="info-card">
+                <h3 style="margin-bottom:12px;color:#00b894;">📋 医生信息</h3>
+                <div class="info-row">
+                    <span class="info-label">姓名</span>
+                    <span class="info-value" th:text="${doctorInfo.name}"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">职称</span>
+                    <span class="info-value" th:text="${doctorInfo.title}"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">所属科室</span>
+                    <span class="info-value" th:text="${doctorInfo.department.name}"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">坐诊时间</span>
+                    <span class="info-value" th:text="${doctorInfo.availableTime}"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">简介</span>
+                    <span class="info-value" th:text="${doctorInfo.description}"></span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3 style="margin-bottom:12px;color:#00b894;">🔐 账号设置</h3>
+                <div th:if="${error != null}" class="error" th:text="${'❌ ' + error}"></div>
+                <div th:if="${success != null}" class="success" th:text="${'✅ ' + success}"></div>
+                <form th:action="@{/doctor/profile/update}" method="post">
+                    <div class="form-group">
+                        <label for="phone">联系电话</label>
+                        <input type="text" id="phone" name="phone" th:value="${user.phone}" placeholder="请输入联系电话">
+                    </div>
+                    <hr style="margin:20px 0;border-color:#eee;">
+                    <h4 style="color:#888;margin-bottom:12px;">修改密码（选填）</h4>
+                    <div class="form-group">
+                        <label for="oldPassword">原密码</label>
+                        <input type="password" id="oldPassword" name="oldPassword" placeholder="如需修改密码请输入原密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">新密码</label>
+                        <input type="password" id="newPassword" name="newPassword" placeholder="请输入新密码">
+                    </div>
+                    <button type="submit" class="btn">💾 保存修改</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

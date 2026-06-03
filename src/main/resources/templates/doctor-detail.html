@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医生详情 - 医院预约挂号系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 5px; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background 0.3s; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.25); font-weight: bold; }
+        .user-greeting { color: rgba(255,255,255,0.9); margin-right: 10px; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; }
+        .content { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .back-btn { display: inline-block; padding: 8px 20px; background: #eee; color: #333; text-decoration: none; border-radius: 4px; margin-bottom: 20px; }
+        .back-btn:hover { background: #ddd; }
+        .doctor-card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .doctor-header { display: flex; gap: 30px; margin-bottom: 30px; }
+        .doctor-avatar { width: 120px; height: 120px; background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; }
+        .doctor-info h1 { color: #333; margin-bottom: 10px; }
+        .doctor-info .title { color: #2E86DE; font-size: 18px; margin-bottom: 10px; }
+        .doctor-info .department { color: #666; }
+        .doctor-desc { margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .doctor-desc h3 { color: #333; margin-bottom: 10px; }
+        .doctor-desc p { color: #666; line-height: 1.8; }
+        .doctor-time { padding: 20px; background: #e3f2fd; border-radius: 8px; margin-bottom: 30px; }
+        .doctor-time h3 { color: #1976d2; margin-bottom: 10px; }
+        .doctor-time p { color: #333; font-size: 16px; }
+        .review-section { margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .review-section h3 { color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .rating-badge { background: #fff3e0; color: #f57c00; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+        .review-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+        .review-item:last-child { border-bottom: none; }
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .review-user { font-weight: 500; color: #333; }
+        .review-stars { font-size: 14px; }
+        .review-date { color: #999; font-size: 12px; }
+        .review-comment { color: #666; font-size: 14px; line-height: 1.6; }
+        .no-review { text-align: center; padding: 20px; color: #999; }
+        .btn-appoint { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; text-decoration: none; border-radius: 8px; font-size: 18px; text-align: center; }
+        .btn-appoint:hover { opacity: 0.9; }
+        .footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🏥 医院预约挂号系统</div>
+            <div class="nav">
+                <a href="/" class="nav-home">首页</a>
+                <a href="/departments" class="nav-depts">科室导航</a>
+                <a href="/appointments" class="nav-appts">我的预约</a>
+                <a href="/patient/records" class="nav-records">诊疗记录</a>
+                <a href="/profile" class="nav-profile">个人中心</a>
+                <span class="user-greeting">👤 [[${user.name}]]</span>
+                <a href="/logout">退出</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <a href="javascript:history.back()" class="back-btn">← 返回</a>
+        
+        <div class="doctor-card">
+            <div class="doctor-header">
+                <div class="doctor-avatar">👨⚕️</div>
+                <div class="doctor-info">
+                    <h1>[[${doctor.name}]]</h1>
+                    <div class="title">[[${doctor.title}]]</div>
+                    <div class="department">所属科室：[[${doctor.department.name}]]</div>
+                </div>
+            </div>
+            
+            <div class="doctor-desc">
+                <h3>医生简介</h3>
+                <p th:if="${doctor.description != null}">[[${doctor.description}]]</p>
+                <p th:else>暂无简介信息</p>
+            </div>
+            
+            <div class="doctor-time">
+                <h3>坐诊时间</h3>
+                <p>[[${doctor.availableTime}]]</p>
+            </div>
+
+            <div class="review-section" th:if="${reviews != null and reviews.size() > 0}">
+                <h3>患者评价 <span class="rating-badge" th:if="${avgRating > 0}">⭐ [[${#numbers.formatDecimal(avgRating, 1, 1)}]]</span></h3>
+                <div class="review-list">
+                    <div class="review-item" th:each="review : ${reviews}">
+                        <div class="review-header">
+                            <span class="review-user">[[${review.user.name}]]</span>
+                            <span class="review-stars" th:text="${#strings.repeat('⭐', review.rating)}"></span>
+                            <span class="review-date">[[${#temporals.format(review.createdAt, 'yyyy-MM-dd')}]]</span>
+                        </div>
+                        <p class="review-comment" th:if="${review.comment != null and !review.comment.isEmpty()}">[[${review.comment}]]</p>
+                    </div>
+                </div>
+            </div>
+            <div class="no-review" th:if="${reviews == null or reviews.size() == 0}">
+                <p>暂无患者评价</p>
+            </div>
+            
+            <a th:href="@{/appointment/create(doctorId=${doctor.id})}" class="btn-appoint">立即预约</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 医院预约挂号系统 版权所有</p>
+    </div>
+
+    <script>
+        var path = window.location.pathname;
+        if (path === '/' || path === '') document.querySelector('.nav-home')?.classList.add('active');
+        else if (path.startsWith('/departments') || path.startsWith('/doctors') || path.startsWith('/doctor')) document.querySelector('.nav-depts')?.classList.add('active');
+        else if (path.startsWith('/appointment') || path.startsWith('/appointments')) document.querySelector('.nav-appts')?.classList.add('active');
+        else if (path.startsWith('/patient/records')) document.querySelector('.nav-records')?.classList.add('active');
+        else if (path.startsWith('/profile')) document.querySelector('.nav-profile')?.classList.add('active');
+    </script>
+</body>
+</html>

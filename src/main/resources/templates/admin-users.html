@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 医院管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #FF6B6B 0%, #C92A2A 100%); color: white; padding: 15px 0; }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 20px; font-weight: bold; }
+        .nav a { color: white; text-decoration: none; margin-left: 30px; }
+        .content { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .page-title { margin-bottom: 20px; }
+        .page-title h1 { color: #333; font-size: 28px; margin-bottom: 10px; }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-bar input { flex: 1; max-width: 400px; padding: 10px 16px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none; }
+        .search-bar input:focus { border-color: #C92A2A; }
+        .search-bar button { padding: 10px 20px; background: #C92A2A; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .search-bar button:hover { background: #B02525; }
+        table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; color: #333; }
+        tr:hover { background: #f8f9fa; }
+        .role-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; }
+        .role-patient { background: #d1ecf1; color: #0c5460; }
+        .role-admin { background: #f8d7da; color: #721c24; }
+        .role-doctor { background: #d5f4e6; color: #00b894; }
+        .pagination { margin-top: 20px; text-align: center; }
+        .pagination a { padding: 8px 16px; background: white; color: #C92A2A; text-decoration: none; border-radius: 4px; margin: 0 5px; }
+        .pagination a:hover { background: #C92A2A; color: white; }
+        .pagination .active { background: #C92A2A; color: white; }
+        .empty { text-align: center; padding: 60px 20px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">👥 医院管理系统 - 用户管理</div>
+            <div class="nav">
+                <a href="/admin/dashboard">🏠 返回首页</a>
+                <a href="/logout">🚪 退出登录</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="page-title">
+            <h1>用户管理</h1>
+            <div style="margin-top: 10px; color: #666; font-size: 14px;">
+                患者：<span th:text="${patientCount}" style="color: #17a2b8; font-weight: bold;">0</span> 人 |
+                医生：<span th:text="${doctorCount}" style="color: #00b894; font-weight: bold;">0</span> 人 |
+                管理员：<span th:text="${adminCount}" style="color: #dc3545; font-weight: bold;">0</span> 人
+            </div>
+        </div>
+        
+        <form class="search-bar" action="/admin/users" method="get">
+            <input type="text" name="keyword" placeholder="搜索用户名或姓名..." th:value="${keyword}">
+            <button type="submit">🔍 搜索</button>
+        </form>
+        
+        <table th:if="${users != null and users.size() > 0}">
+            <thead>
+                <tr>
+                    <th>用户名</th>
+                    <th>姓名</th>
+                    <th>手机号</th>
+                    <th>角色</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${users}">
+                    <td th:text="${user.username}"></td>
+                    <td th:text="${user.name}"></td>
+                    <td th:text="${user.phone != null ? user.phone : '未绑定'}"></td>
+                    <td>
+                        <span class="role-badge" th:classappend="${user.role == 1 ? 'role-admin' : (user.role == 2 ? 'role-doctor' : 'role-patient')}">
+                        [[${user.role == 1 ? '管理员' : (user.role == 2 ? '医生' : '患者')}]]
+                    </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="empty" th:if="${users == null or users.size() == 0}">
+            <p>暂无用户信息</p>
+        </div>
+        
+        <div class="pagination" th:if="${userPage != null and userPage.totalPages > 1}">
+            <a th:if="${!userPage.first}" th:href="@{/admin/users(page=${userPage.number - 1}, keyword=${keyword})}">上一页</a>
+            <span th:text="${userPage.number + 1}" style="padding:8px 16px;background:#C92A2A;color:white;border-radius:4px;margin:0 5px;"></span>
+            <a th:if="${!userPage.last}" th:href="@{/admin/users(page=${userPage.number + 1}, keyword=${keyword})}">下一页</a>
+        </div>
+    </div>
+</body>
+</html>

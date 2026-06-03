@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修改预约 - 医院预约挂号系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 5px; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background 0.3s; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.25); font-weight: bold; }
+        .user-greeting { color: rgba(255,255,255,0.9); margin-right: 10px; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; }
+        .content { max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        .back-btn { display: inline-block; padding: 8px 20px; background: #eee; color: #333; text-decoration: none; border-radius: 4px; margin-bottom: 20px; }
+        .back-btn:hover { background: #ddd; }
+        .appointment-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .page-title { text-align: center; margin-bottom: 30px; }
+        .page-title h1 { color: #333; font-size: 24px; }
+        .doctor-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .doctor-info h3 { color: #333; margin-bottom: 10px; }
+        .doctor-info p { color: #666; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        .form-group input:focus { outline: none; border-color: #2E86DE; }
+        .btn-group { display: flex; gap: 15px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 134, 222, 0.4); }
+        .btn-secondary { background: #eee; color: #333; }
+        .btn-secondary:hover { background: #ddd; }
+        .footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🏥 医院预约挂号系统</div>
+            <div class="nav">
+                <a href="/" class="nav-home">首页</a>
+                <a href="/departments" class="nav-depts">科室导航</a>
+                <a href="/appointments" class="nav-appts">我的预约</a>
+                <a href="/patient/records" class="nav-records">诊疗记录</a>
+                <a href="/profile" class="nav-profile">个人中心</a>
+                <span class="user-greeting">👤 [[${user.name}]]</span>
+                <a href="/logout">退出</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <a href="/appointments" class="back-btn">← 返回我的预约</a>
+        
+        <div class="appointment-card">
+            <div class="page-title">
+                <h1>修改预约信息</h1>
+            </div>
+            
+            <div class="doctor-info">
+                <h3>就诊医生</h3>
+                <p>[[${appointment.doctor.name}]] - [[${appointment.doctor.title}]] - [[${appointment.doctor.department.name}]]</p>
+                <p>坐诊时间：[[${appointment.doctor.availableTime}]]</p>
+            </div>
+            
+            <form action="/appointment/update" method="post">
+                <input type="hidden" name="id" th:value="${appointment.id}">
+                
+                <div class="form-group">
+                    <label for="appointmentDate">预约日期</label>
+                    <input type="date" id="appointmentDate" name="appointmentDate" th:value="${appointment.appointmentDate}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="appointmentTime">预约时间</label>
+                    <input type="time" id="appointmentTime" name="appointmentTime" th:value="${appointment.appointmentTime}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="patientName">患者姓名</label>
+                    <input type="text" id="patientName" name="patientName" th:value="${appointment.patientName}" placeholder="请输入患者姓名" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="patientPhone">联系电话</label>
+                    <input type="tel" id="patientPhone" name="patientPhone" th:value="${appointment.patientPhone}" placeholder="请输入联系电话" required>
+                </div>
+
+                <div th:if="${error}" style="color: red; margin-bottom: 15px; text-align: center;">
+                    <p th:text="${error}"></p>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">确认修改</button>
+                    <a href="/appointments" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 医院预约挂号系统 版权所有</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            var minDate = yyyy + '-' + mm + '-' + dd;
+            document.getElementById('appointmentDate').setAttribute('min', minDate);
+        });
+
+        var path = window.location.pathname;
+        if (path === '/' || path === '') document.querySelector('.nav-home')?.classList.add('active');
+        else if (path.startsWith('/departments') || path.startsWith('/doctors') || path.startsWith('/doctor')) document.querySelector('.nav-depts')?.classList.add('active');
+        else if (path.startsWith('/appointment') || path.startsWith('/appointments')) document.querySelector('.nav-appts')?.classList.add('active');
+        else if (path.startsWith('/patient/records')) document.querySelector('.nav-records')?.classList.add('active');
+        else if (path.startsWith('/profile')) document.querySelector('.nav-profile')?.classList.add('active');
+    </script>
+</body>
+</html>

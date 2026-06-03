@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - 医院预约挂号系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 5px; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background 0.3s; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.25); font-weight: bold; }
+        .user-greeting { color: rgba(255,255,255,0.9); margin-right: 10px; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; }
+        .content { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .profile-card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .page-title { text-align: center; margin-bottom: 30px; }
+        .page-title h1 { color: #333; font-size: 28px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
+        .form-group input:focus { outline: none; border-color: #2E86DE; }
+        .btn { padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 134, 222, 0.4); }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: #e8f5e9; color: #4caf50; }
+        .alert-error { background: #ffebee; color: #c62828; }
+        .footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🏥 医院预约挂号系统</div>
+            <div class="nav">
+                <a href="/" class="nav-home">首页</a>
+                <a href="/departments" class="nav-depts">科室导航</a>
+                <a href="/appointments" class="nav-appts">我的预约</a>
+                <a href="/patient/records" class="nav-records">诊疗记录</a>
+                <a href="/profile" class="nav-profile">个人中心</a>
+                <span class="user-greeting">👤 [[${user.name}]]</span>
+                <a href="/logout">退出</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="profile-card">
+            <div class="page-title">
+                <h1>个人信息</h1>
+            </div>
+            
+            <div th:if="${success != null}" class="alert alert-success">
+                ✅ [[${success}]]
+            </div>
+            
+            <div th:if="${error != null}" class="alert alert-error">
+                ❌ [[${error}]]
+            </div>
+            
+            <form action="/profile/update" method="post">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" th:value="${user.username}" disabled style="background: #f5f5f5;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="name">姓名</label>
+                    <input type="text" id="name" name="name" th:value="${user.name}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">手机号</label>
+                    <input type="tel" id="phone" name="phone" th:value="${user.phone}" placeholder="请输入手机号">
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #eee;">
+                    <h3 style="margin-bottom: 20px; color: #333;">修改密码（可选）</h3>
+                    
+                    <div class="form-group">
+                        <label for="oldPassword">原密码</label>
+                        <input type="password" id="oldPassword" name="oldPassword" placeholder="请输入原密码">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newPassword">新密码</label>
+                        <input type="password" id="newPassword" name="newPassword" placeholder="请输入新密码">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">保存修改</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 医院预约挂号系统 版权所有</p>
+    </div>
+
+    <script>
+        var path = window.location.pathname;
+        if (path === '/' || path === '') document.querySelector('.nav-home')?.classList.add('active');
+        else if (path.startsWith('/departments') || path.startsWith('/doctors') || path.startsWith('/doctor')) document.querySelector('.nav-depts')?.classList.add('active');
+        else if (path.startsWith('/appointment') || path.startsWith('/appointments')) document.querySelector('.nav-appts')?.classList.add('active');
+        else if (path.startsWith('/patient/records')) document.querySelector('.nav-records')?.classList.add('active');
+        else if (path.startsWith('/profile')) document.querySelector('.nav-profile')?.classList.add('active');
+    </script>
+</body>
+</html>

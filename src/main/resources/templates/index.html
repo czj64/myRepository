@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医院预约挂号系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 5px; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background 0.3s; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.25); font-weight: bold; }
+        .user-greeting { color: rgba(255,255,255,0.9); margin-right: 10px; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; }
+        .banner { text-align: center; padding: 60px 20px; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%232E86DE" fill-opacity="0.1" d="M0,192L48,181.3C96,171,192,149,288,149.3C384,149,480,171,576,181.3C672,192,768,192,864,181.3C960,171,1056,149,1152,144C1248,139,1344,149,1392,154.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom; background-size: cover; }
+        .banner h1 { font-size: 48px; margin-bottom: 20px; color: #333; }
+        .banner p { font-size: 18px; color: #666; margin-bottom: 40px; }
+        .btn-group { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .btn { display: inline-block; padding: 12px 36px; border-radius: 30px; font-size: 18px; transition: all 0.3s; text-decoration: none; }
+        .btn-primary { background: #2E86DE; color: white; }
+        .btn-primary:hover { background: #1E6FCF; transform: translateY(-2px); }
+        .btn-secondary { background: #FF6B6B; color: white; }
+        .btn-secondary:hover { background: #C92A2A; transform: translateY(-2px); }
+        .features { max-width: 1200px; margin: 40px auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; padding: 0 20px; }
+        .feature-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); text-align: center; }
+        .feature-card h3 { color: #333; margin: 15px 0; }
+        .feature-card p { color: #666; line-height: 1.6; }
+        .footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🏥 医院预约挂号系统</div>
+            <div class="nav">
+                <a href="/" class="nav-home">首页</a>
+                <a href="/departments" class="nav-depts">科室导航</a>
+                <a href="/appointments" class="nav-appts">我的预约</a>
+                <a href="/patient/records" class="nav-records">诊疗记录</a>
+                <a href="/profile" class="nav-profile" th:if="${user != null}">个人中心</a>
+                <span th:if="${user != null}" class="user-greeting">👤 [[${user.name}]]</span>
+                <a href="/login" th:if="${user == null}">登录</a>
+                <a href="/logout" th:if="${user != null}">退出</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="banner">
+        <h1>欢迎使用医院预约挂号系统</h1>
+        <p>在线预约，方便快捷，为您的健康保驾护航</p>
+        <div class="btn-group" th:if="${user == null}">
+            <a href="/login" class="btn btn-primary">👤 患者登录</a>
+            <a href="/doctor-login" class="btn" style="background: #00b894; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-size: 16px; font-weight: 500;">👨‍⚕️ 医生登录</a>
+            <a href="/admin-login" class="btn btn-secondary">👨‍💼 管理员登录</a>
+        </div>
+        <a href="/departments" th:if="${user != null}" class="btn btn-primary">开始预约</a>
+    </div>
+    
+    <div class="features">
+        <div class="feature-card">
+            <div style="font-size: 48px;">👩⚕️</div>
+            <h3>专家团队</h3>
+            <p>汇聚各科室资深专家，为您提供专业诊疗服务</p>
+        </div>
+        <div class="feature-card">
+            <div style="font-size: 48px;">📅</div>
+            <h3>在线预约</h3>
+            <p>随时随地预约挂号，免去排队等候烦恼</p>
+        </div>
+        <div class="feature-card">
+            <div style="font-size: 48px;">🔒</div>
+            <h3>安全可靠</h3>
+            <p>个人信息严格保密，就医记录安全存储</p>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 医院预约挂号系统 版权所有</p>
+    </div>
+
+    <script>
+        var path = window.location.pathname;
+        if (path === '/' || path === '') document.querySelector('.nav-home')?.classList.add('active');
+        else if (path.startsWith('/departments') || path.startsWith('/doctors') || path.startsWith('/doctor')) document.querySelector('.nav-depts')?.classList.add('active');
+        else if (path.startsWith('/appointment') || path.startsWith('/appointments')) document.querySelector('.nav-appts')?.classList.add('active');
+        else if (path.startsWith('/patient/records')) document.querySelector('.nav-records')?.classList.add('active');
+        else if (path.startsWith('/profile')) document.querySelector('.nav-profile')?.classList.add('active');
+    </script>
+</body>
+</html>

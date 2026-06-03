@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日程安排 - 医生工作台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f7f4; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .header-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .header h1 { font-size: 20px; }
+        .header-right a { color: white; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 6px; }
+        .header-right a:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+        .breadcrumb { color: #666; font-size: 14px; margin-bottom: 16px; }
+        .breadcrumb a { color: #00b894; text-decoration: none; }
+        .content { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .schedule-section { margin-bottom: 24px; }
+        .schedule-section h3 { color: #00b894; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e0f5f1; }
+        .schedule-item { display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: #f8fdfb; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #00b894; }
+        .schedule-icon { font-size: 28px; }
+        .schedule-text h4 { color: #333; }
+        .schedule-text p { color: #666; font-size: 13px; margin-top: 4px; }
+        .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 16px; }
+        .week-day { text-align: center; padding: 12px; border-radius: 8px; font-size: 13px; }
+        .week-day.active { background: #00b894; color: white; }
+        .week-day.inactive { background: #f0f0f0; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <h1>👨‍⚕️ 医生工作台</h1>
+            <div class="header-right">
+                <a href="/doctor/dashboard">📊 仪表板</a>
+                <a href="/logout">🚪 退出</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="breadcrumb"><a href="/doctor/dashboard">← 返回仪表板</a></div>
+        <div class="content">
+            <h2 style="margin-bottom:20px;">📅 日程安排</h2>
+            <div class="schedule-section">
+                <h3>🕐 我的出诊时间</h3>
+                <div class="schedule-item">
+                    <div class="schedule-icon">🏥</div>
+                    <div class="schedule-text">
+                        <h4>坐诊时间</h4>
+                        <p th:text="${availableTime}"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="schedule-section">
+                <h3>📋 本周排班预览</h3>
+                <div class="week-grid">
+                    <div class="week-day" th:classappend="${availableTime.contains('周一') || availableTime.contains('工作日') || availableTime.contains('每天')} ? 'active' : 'inactive'">
+                        <p>周一</p><p>MON</p>
+                        <p th:if="${availableTime.contains('周一') || availableTime.contains('工作日') || availableTime.contains('每天')}" style="font-size:11px;margin-top:4px;">出诊</p>
+                        <p th:unless="${availableTime.contains('周一') || availableTime.contains('工作日') || availableTime.contains('每天')}" style="font-size:11px;margin-top:4px;">休息</p>
+                    </div>
+                    <div class="week-day" th:classappend="${availableTime.contains('周二') || availableTime.contains('工作日') || availableTime.contains('每天')} ? 'active' : 'inactive'">
+                        <p>周二</p><p>TUE</p>
+                        <p th:if="${availableTime.contains('周二') || availableTime.contains('工作日') || availableTime.contains('每天')}" style="font-size:11px;margin-top:4px;">出诊</p>
+                        <p th:unless="${availableTime.contains('周二') || availableTime.contains('工作日') || availableTime.contains('每天')}" style="font-size:11px;margin-top:4px;">休息</p>
+                    </div>
+                    <div class="week-day" th:classappend="${availableTime.contains('周三') || availableTime.contains('工作日') || availableTime.contains('每天')} ? 'active' : 'inactive'">
+                        <p>周三</p><p>WED</p>
+                    </div>
+                    <div class="week-day" th:classappend="${availableTime.contains('周四') || availableTime.contains('工作日') || availableTime.contains('每天')} ? 'active' : 'inactive'">
+                        <p>周四</p><p>THU</p>
+                    </div>
+                    <div class="week-day" th:classappend="${availableTime.contains('周五') || availableTime.contains('工作日') || availableTime.contains('每天')} ? 'active' : 'inactive'">
+                        <p>周五</p><p>FRI</p>
+                    </div>
+                    <div class="week-day" th:classappend="${availableTime.contains('周六') || availableTime.contains('周末') || availableTime.contains('每天')} ? 'active' : 'inactive'">
+                        <p>周六</p><p>SAT</p>
+                    </div>
+                    <div class="week-day" th:classappend="${availableTime.contains('周日') || availableTime.contains('周末') || availableTime.contains('每天')} ? 'active' : 'inactive'">
+                        <p>周日</p><p>SUN</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

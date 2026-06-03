@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>患者管理 - 医生工作台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f7f4; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .header-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .header h1 { font-size: 20px; }
+        .header-right a { color: white; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 6px; }
+        .header-right a:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+        .breadcrumb { color: #666; font-size: 14px; margin-bottom: 16px; }
+        .breadcrumb a { color: #00b894; text-decoration: none; }
+        .tabs { display: flex; gap: 0; margin-bottom: 20px; }
+        .tab { padding: 10px 24px; background: #e0e0e0; border: none; cursor: pointer; font-size: 15px; transition: 0.3s; text-decoration: none; color: #333; border-radius: 8px 8px 0 0; }
+        .tab.active { background: #00b894; color: white; }
+        .content { background: white; padding: 24px; border-radius: 0 12px 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f8f8; color: #555; font-weight: 600; font-size: 14px; }
+        td { font-size: 14px; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .empty-state { text-align: center; padding: 40px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <h1>👨‍⚕️ 医生工作台</h1>
+            <div class="header-right">
+                <a href="/doctor/dashboard">📊 仪表板</a>
+                <a href="/logout">🚪 退出</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="breadcrumb"><a href="/doctor/dashboard">← 返回仪表板</a></div>
+        <h2 style="margin-bottom:16px;">👥 患者管理</h2>
+        <div class="tabs">
+            <a href="/doctor/patients?tab=pending" th:classappend="${tab == 'pending' ? 'active' : ''}" class="tab">待诊患者 (<span th:text="${#lists.size(pendingPatients)}">0</span>)</a>
+            <a href="/doctor/patients?tab=completed" th:classappend="${tab == 'completed' ? 'active' : ''}" class="tab">已诊历史 (<span th:text="${#lists.size(completedPatients)}">0</span>)</a>
+            <a href="/doctor/patients?tab=cancelled" th:classappend="${tab == 'cancelled' ? 'active' : ''}" class="tab">已取消 (<span th:text="${#lists.size(cancelledPatients)}">0</span>)</a>
+        </div>
+        <div class="content">
+            <div th:if="${tab == 'pending' || tab == null}">
+                <h3 style="margin-bottom:12px;">📋 待诊患者列表</h3>
+                <div th:if="${!#lists.isEmpty(pendingPatients)}">
+                    <table><thead><tr><th>序号</th><th>患者姓名</th><th>联系电话</th><th>预约日期</th><th>预约时间</th><th>状态</th></tr></thead>
+                        <tbody>
+                            <tr th:each="p,iter : ${pendingPatients}">
+                                <td th:text="${iter.count}">1</td>
+                                <td th:text="${p.patientName}"></td>
+                                <td th:text="${p.patientPhone}"></td>
+                                <td th:text="${p.appointmentDate}"></td>
+                                <td th:text="${p.appointmentTime}"></td>
+                                <td><span class="status-badge status-pending">待就诊</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${#lists.isEmpty(pendingPatients)}" class="empty-state">🎉 暂无待诊患者</div>
+            </div>
+            <div th:if="${tab == 'completed'}">
+                <h3 style="margin-bottom:12px;">📋 已诊历史记录</h3>
+                <div th:if="${!#lists.isEmpty(completedPatients)}">
+                    <table><thead><tr><th>序号</th><th>患者姓名</th><th>联系电话</th><th>预约日期</th><th>预约时间</th><th>状态</th></tr></thead>
+                        <tbody>
+                            <tr th:each="p,iter : ${completedPatients}">
+                                <td th:text="${iter.count}">1</td>
+                                <td th:text="${p.patientName}"></td>
+                                <td th:text="${p.patientPhone}"></td>
+                                <td th:text="${p.appointmentDate}"></td>
+                                <td th:text="${p.appointmentTime}"></td>
+                                <td><span class="status-badge status-completed">已完成</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${#lists.isEmpty(completedPatients)}" class="empty-state">暂无已诊历史记录</div>
+            </div>
+            <div th:if="${tab == 'cancelled'}">
+                <h3 style="margin-bottom:12px;">📋 已取消记录</h3>
+                <div th:if="${!#lists.isEmpty(cancelledPatients)}">
+                    <table><thead><tr><th>序号</th><th>患者姓名</th><th>联系电话</th><th>预约日期</th><th>预约时间</th><th>状态</th></tr></thead>
+                        <tbody>
+                            <tr th:each="p,iter : ${cancelledPatients}">
+                                <td th:text="${iter.count}">1</td>
+                                <td th:text="${p.patientName}"></td>
+                                <td th:text="${p.patientPhone}"></td>
+                                <td th:text="${p.appointmentDate}"></td>
+                                <td th:text="${p.appointmentTime}"></td>
+                                <td><span class="status-badge" style="background:#fce4ec;color:#c62828;">已取消</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${#lists.isEmpty(cancelledPatients)}" class="empty-state">暂无已取消记录</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

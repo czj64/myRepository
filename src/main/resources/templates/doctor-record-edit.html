@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑诊疗记录 - 医生工作台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f7f4; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .header-inner { max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .header h1 { font-size: 20px; }
+        .header-right a { color: white; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 6px; }
+        .header-right a:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px 24px; }
+        .breadcrumb { color: #666; font-size: 14px; margin-bottom: 16px; }
+        .breadcrumb a { color: #00b894; text-decoration: none; }
+        .content { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content h2 { color: #333; margin-bottom: 24px; }
+        .info-row { background: #f8f8f8; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #00b894; }
+        .form-group input:disabled, .form-group textarea:disabled { background: #f5f5f5; color: #999; cursor: not-allowed; }
+        .btn { padding: 12px 32px; background: #00b894; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn:hover { background: #019a7c; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-cancel { padding: 12px 32px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 16px; text-decoration: none; display: inline-block; margin-left: 12px; }
+        .alert-warning { background: #fce4ec; color: #c62828; padding: 16px; border-radius: 8px; margin-bottom: 20px; font-size: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <h1>👨‍⚕️ 编辑诊疗记录</h1>
+            <div class="header-right"><a href="/doctor/records">📋 返回列表</a></div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="breadcrumb"><a href="/doctor/dashboard">仪表板</a> / <a href="/doctor/records">诊疗记录</a> / 编辑</div>
+        <div class="content">
+            <h2>✏️ 诊疗记录</h2>
+            <div th:if="${cancelled}" class="alert-warning">⚠️ 该患者已取消预约，无法进行诊疗操作</div>
+            <div th:if="${completed}" class="alert-warning">✅ 该患者已完成诊疗，无需重复操作</div>
+            <div class="info-row">
+                <div><strong>患者姓名：</strong><span th:text="${record.patientName.contains('|') ? record.patientName.substring(0, record.patientName.indexOf('|')) : record.patientName}"></span></div>
+                <div><strong>联系电话：</strong><span th:text="${record.patientPhone}"></span></div>
+                <div><strong>预约日期：</strong><span th:text="${record.appointmentDate}"></span></div>
+                <div><strong>预约时间：</strong><span th:text="${record.appointmentTime}"></span></div>
+            </div>
+            <form th:action="@{/doctor/record/save}" method="post">
+                <input type="hidden" name="id" th:value="${record.id}">
+                <div class="form-group">
+                    <label for="diagnosis">诊断结果 *</label>
+                    <textarea id="diagnosis" name="diagnosis" placeholder="请输入诊断结果..." th:disabled="${cancelled or completed}" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="prescription">处方 / 治疗方案 *</label>
+                    <textarea id="prescription" name="prescription" placeholder="请输入处方或治疗方案..." th:disabled="${cancelled or completed}" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="note">备注</label>
+                    <textarea id="note" name="note" placeholder="其他备注信息（选填）" th:disabled="${cancelled or completed}"></textarea>
+                </div>
+                <button type="submit" class="btn" th:disabled="${cancelled or completed}">💾 保存诊疗记录</button>
+                <a href="/doctor/records" class="btn-cancel">取消</a>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

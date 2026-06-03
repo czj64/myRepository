@@ -1,0 +1,26 @@
+医院预约挂号预约系统说明文档
+
+一、项目简介
+本系统为医院预约挂号系统，提供在线预约挂号、就诊管理、后台管理等功能。
+
+二、项目链接地址
+项目地址：D:\code\code\java\code3
+本地访问地址：http://localhost:23160
+
+三、登录入口
+患者端：http://localhost:23160/login
+管理员端：http://localhost:23160/admin-login
+医生端：http://localhost:23160/doctor-login
+
+四、默认账号
+管理员：admin / admin
+患者：user1 / 123456
+医生：wangdoctor / 123456
+
+五、技术栈
+Spring Boot 4.0.6 + Spring Data JPA + Thymeleaf + MySQL
+
+六、数据库配置
+数据库名：rj2411260
+用户名：student
+密码：Student_123
