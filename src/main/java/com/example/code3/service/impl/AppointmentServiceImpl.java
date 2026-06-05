@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -88,19 +87,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     
     @Override
     public long countToday() {
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        
-        List<Appointment> allAppointments = appointmentRepository.findAll();
-        long todayCount = 0;
-        
-        for (Appointment appt : allAppointments) {
-            if (appt.getAppointmentDate().equals(today)) {
-                todayCount++;
-            }
-        }
-        
-        return todayCount;
+        return appointmentRepository.countByAppointmentDate(LocalDate.now());
+    }
+
+    @Override
+    public long countTodayByStatus(String status) {
+        return appointmentRepository.countByAppointmentDateAndStatus(LocalDate.now(), status);
     }
 
     @Override

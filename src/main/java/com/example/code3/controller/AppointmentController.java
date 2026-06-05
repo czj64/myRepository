@@ -2,10 +2,12 @@ package com.example.code3.controller;
 
 import com.example.code3.entity.Appointment;
 import com.example.code3.entity.Doctor;
+import com.example.code3.entity.MedicalRecord;
 import com.example.code3.entity.User;
 import com.example.code3.exception.BusinessException;
 import com.example.code3.service.AppointmentService;
 import com.example.code3.service.DoctorService;
+import com.example.code3.service.MedicalRecordService;
 import com.example.code3.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,26 +19,33 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Controller
 public class AppointmentController {
-    
+
     @Autowired
     private AppointmentService appointmentService;
-    
+
     @Autowired
     private DoctorService doctorService;
-    
+
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MedicalRecordService medicalRecordService;
 
     @GetMapping("/patient/records")
     public String patientRecords(HttpSession session, Model model) {
@@ -49,7 +58,7 @@ public class AppointmentController {
         model.addAttribute("user", user);
         return "patient-records";
     }
-    
+
     @GetMapping("/appointment/create")
     public String createAppointment(@RequestParam Long doctorId, HttpSession session, Model model) {
         User user = (User) session.getAttribute("user");
@@ -57,11 +66,55 @@ public class AppointmentController {
             return "redirect:/login";
         }
         Doctor doctor = doctorService.getById(doctorId);
+        // 预解析坐诊时间范围给前端
+        String[] timeRange = parseTimeRange(doctor.getAvailableTime());
         model.addAttribute("doctor", doctor);
         model.addAttribute("user", user);
+        model.addAttribute("startTime", timeRange[0]);
+        model.addAttribute("endTime", timeRange[1]);
         return "appointment-create";
     }
-    
+
+    /**
+     * 从坐诊时间文本中提取时段（如 "上午8:00-12:00" → ["08:00", "12:00"]）
+     */
+    private String[] parseTimeRange(String availableTime) {
+        if (availableTime == null || availableTime.trim().isEmpty()) {
+            return new String[]{"", ""};
+        }
+        Pattern p = Pattern.compile("(\\d{1,2}:\\d{2})\\s*[-~]\\s*(\\d{1,2}:\\d{2})");
+        Matcher m = p.matcher(availableTime);
+        if (m.find()) {
+            String start = m.group(1);
+            String end = m.group(2);
+            if (start.length() == 4) start = "0" + start;
+            if (end.length() == 4) end = "0" + end;
+            return new String[]{start, end};
+        }
+        return new String[]{"", ""};
+    }
+
+    @GetMapping("/appointment/booked-slots")
+    @ResponseBody
+    public List<Map<String, String>> getBookedSlots(@RequestParam Long doctorId,
+                                                     @RequestParam String date,
+                                                     HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return List.of();
+        }
+        LocalDate localDate = LocalDate.parse(date);
+        List<Appointment> appointments = appointmentService.findByDoctorIdAndDate(doctorId, localDate);
+        return appointments.stream()
+                .map(a -> {
+                    Map<String, String> m = new HashMap<>();
+                    m.put("time", a.getAppointmentTime().toString());
+                    m.put("status", a.getStatus());
+                    return m;
+                })
+                .collect(Collectors.toList());
+    }
+
     @PostMapping("/appointment/submit")
     public String submitAppointment(@RequestParam Long doctorId,
                                     @RequestParam String appointmentDate,
@@ -80,6 +133,14 @@ public class AppointmentController {
             model.addAttribute("doctor", doctor);
             model.addAttribute("user", user);
             model.addAttribute("error", "联系电话不能为空");
+            return "appointment-create";
+        }
+
+        if (!patientPhone.matches("^1[3-9]\\d{9}$")) {
+            Doctor doctor = doctorService.getById(doctorId);
+            model.addAttribute("doctor", doctor);
+            model.addAttribute("user", user);
+            model.addAttribute("error", "请输入有效的11位手机号");
             return "appointment-create";
         }
 
@@ -200,7 +261,7 @@ public class AppointmentController {
             default: return "";
         }
     }
-    
+
     @GetMapping("/appointments")
     public String myAppointments(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(required = false) String status,
@@ -210,10 +271,10 @@ public class AppointmentController {
         if (user == null) {
             return "redirect:/login";
         }
-        
+
         Pageable pageable = PageRequest.of(page, 10);
         Page<Appointment> appointmentPage;
-        
+
         if (keyword != null && !keyword.trim().isEmpty()) {
             String kw = keyword.trim();
             if (status != null && !status.isEmpty()) {
@@ -226,7 +287,7 @@ public class AppointmentController {
         } else {
             appointmentPage = appointmentService.findByUserId(user.getId(), pageable);
         }
-        
+
         model.addAttribute("appointments", appointmentPage.getContent());
         model.addAttribute("appointmentPage", appointmentPage);
         model.addAttribute("user", user);
@@ -234,7 +295,7 @@ public class AppointmentController {
         model.addAttribute("keyword", keyword);
         return "appointments";
     }
-    
+
     @GetMapping("/appointment/edit")
     public String editAppointment(@RequestParam Long id, HttpSession session, Model model) {
         User user = (User) session.getAttribute("user");
@@ -249,7 +310,7 @@ public class AppointmentController {
         model.addAttribute("user", user);
         return "appointment-edit";
     }
-    
+
     @PostMapping("/appointment/update")
     public String updateAppointment(@RequestParam Long id,
                                     @RequestParam String appointmentDate,
@@ -272,6 +333,13 @@ public class AppointmentController {
             model.addAttribute("appointment", appointment);
             model.addAttribute("user", user);
             model.addAttribute("error", "联系电话不能为空");
+            return "appointment-edit";
+        }
+
+        if (!patientPhone.matches("^1[3-9]\\d{9}$")) {
+            model.addAttribute("appointment", appointment);
+            model.addAttribute("user", user);
+            model.addAttribute("error", "请输入有效的11位手机号");
             return "appointment-edit";
         }
 
@@ -304,7 +372,7 @@ public class AppointmentController {
         model.addAttribute("user", user);
         return "appointment-success";
     }
-    
+
     @GetMapping("/appointment/cancel")
     public String cancelAppointment(@RequestParam Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -318,7 +386,7 @@ public class AppointmentController {
         }
         return "redirect:/appointments";
     }
-    
+
     @GetMapping("/profile")
     public String profile(HttpSession session, Model model) {
         User user = (User) session.getAttribute("user");
@@ -328,7 +396,7 @@ public class AppointmentController {
         model.addAttribute("user", user);
         return "profile";
     }
-    
+
     @PostMapping("/profile/update")
     public String updateProfile(@RequestParam String name,
                                @RequestParam(required = false) String phone,
@@ -340,26 +408,38 @@ public class AppointmentController {
         if (user == null) {
             return "redirect:/login";
         }
-        
-        // 更新姓名和手机号
+
         user.setName(name);
         if (phone != null && !phone.isEmpty()) {
+            if (!phone.matches("^1[3-9]\\d{9}$")) {
+                model.addAttribute("user", user);
+                model.addAttribute("error", "请输入有效的11位手机号");
+                return "profile";
+            }
             user.setPhone(phone);
         }
-        
-        // 如果提供了密码，则修改密码
-        if (oldPassword != null && !oldPassword.isEmpty() 
+
+        if (oldPassword != null && !oldPassword.isEmpty()
             && newPassword != null && !newPassword.isEmpty()) {
-            if (!user.getPassword().equals(oldPassword)) {
+            if (newPassword.length() < 6 || newPassword.length() > 20) {
+                model.addAttribute("user", user);
+                model.addAttribute("error", "新密码长度应为6-20位");
+                return "profile";
+            }
+            if (!userService.checkPassword(user, oldPassword)) {
                 model.addAttribute("user", user);
                 model.addAttribute("error", "原密码错误");
                 return "profile";
             }
-            user.setPassword(newPassword);
+            userService.updatePassword(user, newPassword);
+        } else {
+            userService.save(user);
         }
-        
-        userService.save(user);
-        
+
+        // 重新加载用户信息
+        user = userService.getById(user.getId());
+        session.setAttribute("user", user);
+
         model.addAttribute("user", user);
         model.addAttribute("success", "个人信息更新成功！");
         return "profile";

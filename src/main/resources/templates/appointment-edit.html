@@ -20,9 +20,22 @@
         .appointment-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
         .page-title { text-align: center; margin-bottom: 30px; }
         .page-title h1 { color: #333; font-size: 24px; }
-        .doctor-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .doctor-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .doctor-info h3 { color: #333; margin-bottom: 10px; }
         .doctor-info p { color: #666; }
+        .time-slots { margin-bottom: 20px; }
+        .time-slots-label { display: block; margin-bottom: 12px; color: #333; font-weight: 500; }
+        .slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .slot-btn { padding: 12px 8px; border: 2px solid #4caf50; border-radius: 8px; background: #e8f5e9; color: #2e7d32; font-size: 14px; cursor: pointer; text-align: center; font-weight: 500; transition: all 0.2s; }
+        .slot-btn:hover:not(.booked) { border-color: #388e3c; background: #c8e6c9; transform: scale(1.03); }
+        .slot-btn.selected { border-color: #2E86DE; background: #2E86DE; color: white; font-weight: 700; }
+        .slot-btn.booked { border-color: #ef5350; background: #ffebee; color: #c62828; cursor: not-allowed; text-decoration: line-through; font-weight: 400; }
+        .slot-hint { text-align: center; color: #999; margin-top: 20px; font-size: 14px; }
+        .slot-legend { display: flex; gap: 20px; margin-bottom: 12px; font-size: 13px; }
+        .slot-legend span { display: flex; align-items: center; gap: 6px; }
+        .legend-avail { width: 14px; height: 14px; border-radius: 3px; background: #e8f5e9; border: 2px solid #4caf50; }
+        .legend-booked { width: 14px; height: 14px; border-radius: 3px; background: #ffebee; border: 2px solid #ef5350; }
+        .legend-selected { width: 14px; height: 14px; border-radius: 3px; background: #2E86DE; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
         .form-group input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
@@ -31,9 +44,11 @@
         .btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s; }
         .btn-primary { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 134, 222, 0.4); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
         .btn-secondary { background: #eee; color: #333; }
         .btn-secondary:hover { background: #ddd; }
         .footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        .current-slot { background: #fff8e1; border-left: 4px solid #ffa000; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; color: #e65100; }
     </style>
 </head>
 <body>
@@ -51,34 +66,48 @@
             </div>
         </div>
     </div>
-    
+
     <div class="content">
         <a href="/appointments" class="back-btn">← 返回我的预约</a>
-        
+
         <div class="appointment-card">
             <div class="page-title">
                 <h1>修改预约信息</h1>
             </div>
-            
+
             <div class="doctor-info">
                 <h3>就诊医生</h3>
                 <p>[[${appointment.doctor.name}]] - [[${appointment.doctor.title}]] - [[${appointment.doctor.department.name}]]</p>
                 <p>坐诊时间：[[${appointment.doctor.availableTime}]]</p>
             </div>
-            
-            <form action="/appointment/update" method="post">
+            <span id="availTimeText" style="display:none;">[[${appointment.doctor.availableTime}]]</span>
+
+            <div class="current-slot" id="currentSlot">
+                📅 当前预约：<strong th:text="${appointment.appointmentDate}"></strong>
+                <strong th:text="${appointment.appointmentTime}"></strong>
+            </div>
+
+            <form action="/appointment/update" method="post" id="editForm">
                 <input type="hidden" name="id" th:value="${appointment.id}">
-                
+
                 <div class="form-group">
                     <label for="appointmentDate">预约日期</label>
                     <input type="date" id="appointmentDate" name="appointmentDate" th:value="${appointment.appointmentDate}" required>
                 </div>
-                
-                <div class="form-group">
-                    <label for="appointmentTime">预约时间</label>
-                    <input type="time" id="appointmentTime" name="appointmentTime" th:value="${appointment.appointmentTime}" required>
+
+                <div class="time-slots">
+                    <label class="time-slots-label">预约时间（点击选择）</label>
+                    <div class="slot-legend">
+                        <span><span class="legend-avail"></span> 可预约</span>
+                        <span><span class="legend-booked"></span> 已约满</span>
+                        <span><span class="legend-selected"></span> 已选中</span>
+                    </div>
+                    <div id="slotGrid" class="slot-grid">
+                        <p class="slot-hint">请先选择预约日期</p>
+                    </div>
+                    <input type="hidden" id="appointmentTime" name="appointmentTime" th:value="${appointment.appointmentTime}">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="patientName">患者姓名</label>
                     <input type="text" id="patientName" name="patientName" th:value="${appointment.patientName}" placeholder="请输入患者姓名" required>
@@ -86,41 +115,141 @@
 
                 <div class="form-group">
                     <label for="patientPhone">联系电话</label>
-                    <input type="tel" id="patientPhone" name="patientPhone" th:value="${appointment.patientPhone}" placeholder="请输入联系电话" required>
+                    <input type="tel" id="patientPhone" name="patientPhone" th:value="${appointment.patientPhone}" placeholder="请输入11位手机号" pattern="^1[3-9]\d{9}$" title="请输入有效的11位手机号" required>
                 </div>
 
-                <div th:if="${error}" style="color: red; margin-bottom: 15px; text-align: center;">
+                <div th:if="${error}" style="color: #c62828; margin-bottom: 15px; text-align: center;">
                     <p th:text="${error}"></p>
                 </div>
 
                 <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">确认修改</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">确认修改</button>
                     <a href="/appointments" class="btn btn-secondary">取消</a>
                 </div>
             </form>
         </div>
     </div>
-    
+
     <div class="footer">
         <p>© 2024 医院预约挂号系统 版权所有</p>
     </div>
 
     <script>
+        var doctorId = /*[[${appointment.doctor.id}]]*/ 0;
+        var origDate  = /*[[${appointment.appointmentDate}]]*/ '';
+        var origTime  = /*[[${appointment.appointmentTime}]]*/ '';
+        var DAYS_CN   = ['周日','周一','周二','周三','周四','周五','周六'];
+        var DAYS_EN   = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
         document.addEventListener('DOMContentLoaded', function() {
+            var el = document.getElementById('availTimeText');
+            if (el) {
+                var t = el.textContent.trim();
+                var m = t.match(/(\d{1,2}):(\d{2})\s*[-~]\s*(\d{1,2}):(\d{2})/);
+                if (m) {
+                    window._timeStart = m[1].padStart(2, '0') + ':' + m[2];
+                    window._timeEnd   = m[3].padStart(2, '0') + ':' + m[4];
+                }
+            }
             var today = new Date();
-            var dd = String(today.getDate()).padStart(2, '0');
-            var mm = String(today.getMonth() + 1).padStart(2, '0');
-            var yyyy = today.getFullYear();
-            var minDate = yyyy + '-' + mm + '-' + dd;
-            document.getElementById('appointmentDate').setAttribute('min', minDate);
+            var minDate = today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                String(today.getDate()).padStart(2, '0');
+            var dateInput = document.getElementById('appointmentDate');
+            dateInput.setAttribute('min', minDate);
+            dateInput.addEventListener('change', loadSlots);
+
+            // 页面加载后，预加载当天（如果原日期匹配）的时段
+            if (origDate === dateInput.value) {
+                loadSlots();
+            }
         });
 
+        function isDocAvail(dateStr) {
+            var el = document.getElementById('availTimeText');
+            if (!el) return false;
+            var avail = el.textContent.toLowerCase();
+            var d = new Date(dateStr + 'T00:00:00');
+            var dayCN = DAYS_CN[d.getDay()];
+            var dayEN = DAYS_EN[d.getDay()];
+            if (avail.indexOf('每天')>=0) return true;
+            if (avail.indexOf('周一至周五')>=0||avail.indexOf('weekday')>=0||avail.indexOf('工作日')>=0) return d.getDay()>=1&&d.getDay()<=5;
+            if (avail.indexOf('周末')>=0||avail.indexOf('weekend')>=0) return d.getDay()===0||d.getDay()===6;
+            if (avail.indexOf(dayCN)>=0||avail.indexOf(dayEN)>=0) return true;
+            var m = {'monday':'mon','tuesday':'tue','wednesday':'wed','thursday':'thu','friday':'fri','saturday':'sat','sunday':'sun'};
+            if (avail.indexOf(m[dayEN])>=0) return true;
+            return false;
+        }
+
+        function genSlots(startStr, endStr, interval) {
+            var slots = [], sp = startStr.split(':').map(Number), ep = endStr.split(':').map(Number);
+            for (var m = sp[0]*60+sp[1]; m < ep[0]*60+ep[1]; m += interval) {
+                var h = Math.floor(m/60), min = m%60;
+                var time = String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');
+                var em = m+interval, eh = Math.floor(em/60), emi = em%60;
+                var label = time+'-'+String(eh).padStart(2,'0')+':'+String(emi).padStart(2,'0');
+                slots.push({time:time, label:label});
+            }
+            return slots;
+        }
+
+        async function loadSlots() {
+            var dateVal = document.getElementById('appointmentDate').value;
+            var grid = document.getElementById('slotGrid');
+            var submitBtn = document.getElementById('submitBtn');
+            var timeInput = document.getElementById('appointmentTime');
+
+            if (!dateVal) { grid.innerHTML='<p class="slot-hint">请先选择预约日期</p>'; return; }
+            if (!isDocAvail(dateVal)) {
+                grid.innerHTML='<p class="slot-hint" style="color:#c62828;">该日期医生不坐诊，请选择其他日期</p>';
+                return;
+            }
+            if (!window._timeStart || !window._timeEnd) {
+                grid.innerHTML='<p class="slot-hint">无法解析医生坐诊时间</p>'; return;
+            }
+
+            try {
+                var bookedTimes = {};
+                try {
+                    var resp = await fetch('/appointment/booked-slots?doctorId='+doctorId+'&date='+dateVal);
+                    if (resp.ok) {
+                        var data = await resp.json();
+                        data.forEach(function(b) {
+                            // 排除自己当前的预约（修改时不应显示为已占用）
+                            if (dateVal===origDate && String(b.time).substring(0,5)===origTime.substring(0,5)) return;
+                            bookedTimes[String(b.time).substring(0,5)] = b.status;
+                        });
+                    }
+                } catch(e) {}
+
+                var slots = genSlots(window._timeStart, window._timeEnd, 60);
+                var html = '';
+                slots.forEach(function(s) {
+                    var booked = s.time in bookedTimes;
+                    var isOrig = (dateVal===origDate && s.time===origTime.substring(0,5));
+                    var cls = booked ? 'slot-btn booked' : (isOrig ? 'slot-btn selected' : 'slot-btn');
+                    html += '<button type="button" class="'+cls+'" data-time="'+s.time+'"'
+                          + (booked?' disabled':'') + '>' + s.label + '</button>';
+                });
+                if (slots.length===0) html = '<p class="slot-hint">该日期不坐诊</p>';
+                grid.innerHTML = html;
+
+                grid.querySelectorAll('.slot-btn:not(.booked)').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        grid.querySelectorAll('.slot-btn').forEach(function(b){b.classList.remove('selected');});
+                        btn.classList.add('selected');
+                        timeInput.value = btn.dataset.time;
+                        submitBtn.textContent = '确认修改 ' + btn.dataset.time;
+                    });
+                });
+            } catch(err) {
+                grid.innerHTML = '<p class="slot-hint" style="color:#c62828;">加载时段失败，请重试</p>';
+            }
+        }
+
         var path = window.location.pathname;
-        if (path === '/' || path === '') document.querySelector('.nav-home')?.classList.add('active');
-        else if (path.startsWith('/departments') || path.startsWith('/doctors') || path.startsWith('/doctor')) document.querySelector('.nav-depts')?.classList.add('active');
-        else if (path.startsWith('/appointment') || path.startsWith('/appointments')) document.querySelector('.nav-appts')?.classList.add('active');
-        else if (path.startsWith('/patient/records')) document.querySelector('.nav-records')?.classList.add('active');
-        else if (path.startsWith('/profile')) document.querySelector('.nav-profile')?.classList.add('active');
+        if (path.startsWith('/departments/')) document.querySelector('.nav-depts')?.classList.add('active');
+        else if (path.startsWith('/appointment/')||path.startsWith('/appointments')) document.querySelector('.nav-appts')?.classList.add('active');
     </script>
 </body>
 </html>

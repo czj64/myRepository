@@ -64,28 +64,42 @@ CREATE TABLE IF NOT EXISTS review (
     FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价表';
 
+CREATE TABLE IF NOT EXISTS medical_record (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '诊疗记录ID',
+    appointment_id BIGINT NOT NULL COMMENT '关联预约ID',
+    user_id BIGINT NOT NULL COMMENT '患者ID',
+    doctor_id BIGINT NOT NULL COMMENT '医生ID',
+    diagnosis TEXT COMMENT '诊断结果',
+    prescription TEXT COMMENT '处方信息',
+    note VARCHAR(500) COMMENT '备注',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    FOREIGN KEY (appointment_id) REFERENCES appointment(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='诊疗记录表';
+
 -- ==================== 初始数据 ====================
 
 -- 用户数据
 INSERT IGNORE INTO user (username, password, name, phone, role) VALUES
 -- 患者 (role=0)
-('user1',   '123456', '张三', '13800001001', 0),
-('user2',   '123456', '李四', '13800001002', 0),
-('user3',   '123456', '王五', '13800001003', 0),
+('user1',   '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '张三', '13800001001', 0),
+('user2',   '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '李四', '13800001002', 0),
+('user3',   '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '王五', '13800001003', 0),
 -- 管理员 (role=1)
-('admin',   'admin',  '管理员',  '13900139001', 1),
+('admin',   '$2a$10$.ma/iGtx4Y0JYrmk91LMTexxl7tq5PsNOxyxWO8DfH09Ecffa4VsC',  '管理员',  '13900139001', 1),
 -- 医生账号 (role=2)
-('wangdoctor', '123456', '王医生', NULL, 2),
-('lidoctor', '123456', '李医生', NULL, 2),
-('zhangdoctor', '123456', '张医生', NULL, 2),
-('liudoctor', '123456', '刘医生', NULL, 2),
-('chendoctor', '123456', '陈医生', NULL, 2),
-('zhaodoctor', '123456', '赵医生', NULL, 2),
-('sundoctor', '123456', '孙医生', NULL, 2),
-('zhoudoctor', '123456', '周医生', NULL, 2),
-('wudoctor', '123456', '吴医生', NULL, 2),
-('zhendoctor', '123456', '郑医生', NULL, 2),
-('fengdoctor', '123456', '冯医生', NULL, 2);
+('wangdoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '王医生', NULL, 2),
+('lidoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '李医生', NULL, 2),
+('zhangdoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '张医生', NULL, 2),
+('liudoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '刘医生', NULL, 2),
+('chendoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '陈医生', NULL, 2),
+('zhaodoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '赵医生', NULL, 2),
+('sundoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '孙医生', NULL, 2),
+('zhoudoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '周医生', NULL, 2),
+('wudoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '吴医生', NULL, 2),
+('zhendoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '郑医生', NULL, 2),
+('fengdoctor', '$2a$10$oeJ/39RzVABpkGIC6gEEyeTsZMSQpk/zZQCBDb8rVqLYru8sJocZ2', '冯医生', NULL, 2);
 
 -- 科室数据
 INSERT IGNORE INTO department (name, description) VALUES

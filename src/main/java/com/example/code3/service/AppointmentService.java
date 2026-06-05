@@ -18,9 +18,10 @@ public interface AppointmentService {
     Appointment getById(Long id);
     void deleteById(Long id);
     List<Appointment> findAll();
-    boolean hasTimeConflict(Long doctorId, LocalDate date, java.time.LocalTime time, Long excludeAppointmentId);
+    boolean hasTimeConflict(Long doctorId, LocalDate date, LocalTime time, Long excludeAppointmentId);
     long countByStatus(String status);
     long countToday();
+    long countTodayByStatus(String status);
     List<Appointment> findByDate(LocalDate date);
     List<Appointment> findByDoctorIdAndDate(Long doctorId, LocalDate date);
     List<Appointment> findByDoctorIdAndStatus(Long doctorId, String status);

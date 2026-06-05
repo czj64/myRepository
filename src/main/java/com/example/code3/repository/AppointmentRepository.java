@@ -20,6 +20,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByDoctorIdAndStatusOrderByAppointmentDateDesc(Long doctorId, String status);
     long countByStatus(String status);
     long countByAppointmentDate(LocalDate date);
+    long countByAppointmentDateAndStatus(LocalDate date, String status);
     long countByDoctorIdAndStatus(Long doctorId, String status);
     Page<Appointment> findByDoctorIdOrderByAppointmentDateDesc(Long doctorId, Pageable pageable);
     Page<Appointment> findByDoctorIdAndUserIdOrderByAppointmentDateDesc(Long doctorId, Long userId, Pageable pageable);

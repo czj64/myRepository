@@ -77,25 +77,6 @@
                     </span>
                 </div>
 
-                <div th:if="${r.status == '已完成' and r.patientName.contains('|')}" class="record-detail">
-                    <div class="diag-item">
-                        <div class="diag-label">🏥 诊断结果</div>
-                        <div class="diag-value" th:text="${#strings.substringAfter(#strings.substringBefore(r.patientName, '|方:'), '|诊:')}"></div>
-                    </div>
-                    <div class="diag-item">
-                        <div class="diag-label">💊 处方 / 治疗方案</div>
-                        <div class="diag-value" th:text="${#strings.substringAfter(#strings.substringBefore(r.patientName, '|注:'), '|方:')}"></div>
-                    </div>
-                    <div class="diag-item" th:if="${r.patientName.contains('|注:')}">
-                        <div class="diag-label">📝 备注</div>
-                        <div class="diag-value" th:text="${#strings.substringAfter(r.patientName, '|注:')}"></div>
-                    </div>
-                </div>
-
-                <div th:if="${r.status == '已完成' and !r.patientName.contains('|')}" class="record-detail">
-                    <div class="no-diag">✅ 该预约已完成，暂未录入详细诊疗信息</div>
-                </div>
-
                 <div th:if="${r.status != '已完成'}" class="record-detail" style="text-align:center;color:#999;">
                     <span th:if="${r.status == '已取消'}">❌ 预约已取消</span>
                     <span th:if="${r.status == '待就诊' or r.status == '已确认'}">⏳ 等待医生诊断</span>

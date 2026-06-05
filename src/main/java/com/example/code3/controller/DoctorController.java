@@ -3,11 +3,13 @@ package com.example.code3.controller;
 import com.example.code3.entity.Appointment;
 import com.example.code3.entity.Department;
 import com.example.code3.entity.Doctor;
+import com.example.code3.entity.MedicalRecord;
 import com.example.code3.entity.Review;
 import com.example.code3.entity.User;
 import com.example.code3.service.AppointmentService;
 import com.example.code3.service.DepartmentService;
 import com.example.code3.service.DoctorService;
+import com.example.code3.service.MedicalRecordService;
 import com.example.code3.service.ReviewService;
 import com.example.code3.service.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -41,6 +43,9 @@ public class DoctorController {
 
     @Autowired
     private ReviewService reviewService;
+
+    @Autowired
+    private MedicalRecordService medicalRecordService;
 
     private Doctor getCurrentDoctor(HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -166,7 +171,9 @@ public class DoctorController {
         if (appointment == null || !appointment.getDoctor().getId().equals(doctor.getId())) {
             return "redirect:/doctor/records";
         }
+        MedicalRecord medicalRecord = medicalRecordService.findByAppointmentId(id);
         model.addAttribute("record", appointment);
+        model.addAttribute("medicalRecord", medicalRecord);
         model.addAttribute("cancelled", "已取消".equals(appointment.getStatus()));
         model.addAttribute("completed", "已完成".equals(appointment.getStatus()));
         return "doctor-record-edit";
@@ -186,10 +193,19 @@ public class DoctorController {
             if ("已取消".equals(appointment.getStatus()) || "已完成".equals(appointment.getStatus())) {
                 return "redirect:/doctor/records";
             }
-            appointment.setPatientName(appointment.getPatientName() + "|诊:" + diagnosis + "|方:" + prescription);
-            if (note != null && !note.isEmpty()) {
-                appointment.setPatientName(appointment.getPatientName() + "|注:" + note);
+            // 创建独立诊疗记录
+            MedicalRecord mr = medicalRecordService.findByAppointmentId(id);
+            if (mr == null) {
+                mr = new MedicalRecord();
+                mr.setAppointment(appointment);
+                mr.setUser(appointment.getUser());
+                mr.setDoctor(appointment.getDoctor());
             }
+            mr.setDiagnosis(diagnosis);
+            mr.setPrescription(prescription);
+            mr.setNote(note != null && !note.isEmpty() ? note : null);
+            medicalRecordService.save(mr);
+
             appointment.setStatus("已完成");
             appointmentService.save(appointment);
         }
@@ -248,17 +264,25 @@ public class DoctorController {
 
         if (oldPassword != null && !oldPassword.isEmpty()
             && newPassword != null && !newPassword.isEmpty()) {
-            if (!user.getPassword().equals(oldPassword)) {
+            if (newPassword.length() < 6 || newPassword.length() > 20) {
+                model.addAttribute("user", user);
+                model.addAttribute("doctor", doctor);
+                model.addAttribute("doctorInfo", doctor);
+                model.addAttribute("error", "新密码长度应为6-20位");
+                return "doctor-profile";
+            }
+            if (!userService.checkPassword(user, oldPassword)) {
                 model.addAttribute("user", user);
                 model.addAttribute("doctor", doctor);
                 model.addAttribute("doctorInfo", doctor);
                 model.addAttribute("error", "原密码错误");
                 return "doctor-profile";
             }
-            user.setPassword(newPassword);
+            userService.updatePassword(user, newPassword);
+        } else {
+            userService.save(user);
         }
 
-        userService.save(user);
         session.setAttribute("user", user);
 
         model.addAttribute("user", user);

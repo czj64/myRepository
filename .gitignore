@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Python virtual env ###
+.bcrypt_venv/
+.bcrypt_venv2/
+.bcrypt_lib/
