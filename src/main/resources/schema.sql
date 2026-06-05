@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS doctor (
     active BOOLEAN DEFAULT TRUE COMMENT '是否启用',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    FOREIGN KEY (department_id) REFERENCES department(id) ON DELETE CASCADE
+    FOREIGN KEY (department_id) REFERENCES department(id) ON DELETE CASCADE,
+    UNIQUE (name) COMMENT '医生姓名唯一'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='医生表';
 
 CREATE TABLE IF NOT EXISTS appointment (
@@ -126,3 +127,9 @@ INSERT IGNORE INTO doctor (name, title, department_id, description, available_ti
 ('吴医生', '主治医师',   4, '擅长小儿消化系统疾病',                               '周一至周五 下午14:00-18:00'),
 ('郑医生', '主任医师',   5, '擅长关节置换手术',                                   '周一、周三 上午8:00-12:00'),
 ('冯医生', '副主任医师', 5, '擅长脊柱疾病诊治',                                   '周二、周四 上午8:00-12:00');
+
+-- 清理重复医生数据（保留ID最小的记录）
+DELETE FROM doctor WHERE id NOT IN (SELECT * FROM (SELECT MIN(id) FROM doctor GROUP BY name) AS tmp);
+
+-- 添加唯一约束（如果表还没有该约束）
+ALTER TABLE doctor ADD CONSTRAINT uk_doctor_name UNIQUE (name);
