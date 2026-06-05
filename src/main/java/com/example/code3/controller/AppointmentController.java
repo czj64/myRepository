@@ -97,15 +97,11 @@ public class AppointmentController {
     @GetMapping("/appointment/booked-slots")
     @ResponseBody
     public List<Map<String, String>> getBookedSlots(@RequestParam Long doctorId,
-                                                     @RequestParam String date,
-                                                     HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return List.of();
-        }
+                                                     @RequestParam String date) {
         LocalDate localDate = LocalDate.parse(date);
         List<Appointment> appointments = appointmentService.findByDoctorIdAndDate(doctorId, localDate);
         return appointments.stream()
+                .filter(a -> "待就诊".equals(a.getStatus()) || "已完成".equals(a.getStatus()))
                 .map(a -> {
                     Map<String, String> m = new HashMap<>();
                     m.put("time", a.getAppointmentTime().toString());

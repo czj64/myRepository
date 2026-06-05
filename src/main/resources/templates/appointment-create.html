@@ -237,9 +237,11 @@
                             var t = String(b.time).substring(0, 5);
                             bookedTimes[t] = b.status;
                         });
+                    } else {
+                        console.error('获取已预约时段失败:', resp.status, resp.statusText);
                     }
                 } catch (e) {
-                    // API 不可用，全部显示可预约
+                    console.error('获取已预约时段异常:', e);
                 }
 
                 var slots = genSlots(window._timeStart, window._timeEnd, 60);
