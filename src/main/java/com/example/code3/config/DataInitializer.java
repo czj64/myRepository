@@ -15,7 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+// @Component  // 改用 schema.sql 初始化数据
 public class DataInitializer implements CommandLineRunner {
     
     @Autowired
