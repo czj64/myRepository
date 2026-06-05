@@ -11,10 +11,11 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-// @Component  // 已关闭，数据库已有数据时不再需要自动初始化
+@Component
 public class DataInitializer implements CommandLineRunner {
     
     @Autowired
@@ -25,6 +26,9 @@ public class DataInitializer implements CommandLineRunner {
     
     @Autowired
     private DoctorRepository doctorRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -45,7 +49,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userRepository.findByUsername("user001").isEmpty()) {
             User user1 = new User();
             user1.setUsername("user001");
-            user1.setPassword("123456");
+            user1.setPassword(passwordEncoder.encode("123456"));
             user1.setName("张三");
             user1.setPhone("13800138001");
             user1.setRole(0);
@@ -55,7 +59,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userRepository.findByUsername("admin").isEmpty()) {
             User admin = new User();
             admin.setUsername("admin");
-            admin.setPassword("admin");
+            admin.setPassword(passwordEncoder.encode("admin"));
             admin.setName("管理员");
             admin.setPhone("13900139001");
             admin.setRole(1);
@@ -65,7 +69,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userRepository.findByUsername("user002").isEmpty()) {
             User user2 = new User();
             user2.setUsername("user002");
-            user2.setPassword("123456");
+            user2.setPassword(passwordEncoder.encode("123456"));
             user2.setName("李四");
             user2.setPhone("13800138002");
             user2.setRole(0);
@@ -146,7 +150,7 @@ public class DataInitializer implements CommandLineRunner {
             if (userRepository.findByUsername(d[0]).isEmpty()) {
                 User doctorUser = new User();
                 doctorUser.setUsername(d[0]);
-                doctorUser.setPassword("123456");
+                doctorUser.setPassword(passwordEncoder.encode("123456"));
                 doctorUser.setName(d[1]);
                 doctorUser.setPhone(null);
                 doctorUser.setRole(2);
