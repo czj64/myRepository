@@ -6,6 +6,8 @@ import com.example.code3.service.MedicalRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class MedicalRecordServiceImpl implements MedicalRecordService {
 
@@ -20,5 +22,10 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     @Override
     public MedicalRecord findByAppointmentId(Long appointmentId) {
         return medicalRecordRepository.findByAppointmentId(appointmentId).orElse(null);
+    }
+
+    @Override
+    public List<MedicalRecord> findByUserId(Long userId) {
+        return medicalRecordRepository.findByUserIdOrderByIdDesc(userId);
     }
 }

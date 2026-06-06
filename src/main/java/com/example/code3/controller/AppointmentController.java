@@ -53,7 +53,7 @@ public class AppointmentController {
         if (user == null) {
             return "redirect:/login";
         }
-        List<Appointment> records = appointmentService.findByUserId(user.getId());
+        List<MedicalRecord> records = medicalRecordService.findByUserId(user.getId());
         model.addAttribute("records", records);
         model.addAttribute("user", user);
         return "patient-records";

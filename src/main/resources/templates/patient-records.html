@@ -24,8 +24,6 @@
         .record-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
         .doctor-info h3 { color: #333; margin-bottom: 5px; }
         .doctor-info p { color: #666; font-size: 14px; }
-        .status { padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; }
-        .status-completed { background: #e8f5e9; color: #4caf50; }
         .record-detail { background: #f8f9fa; border-radius: 8px; padding: 16px; margin-top: 12px; }
         .record-detail .diag-item { margin-bottom: 12px; }
         .record-detail .diag-item:last-child { margin-bottom: 0; }
@@ -62,7 +60,7 @@
     <div class="content">
         <div class="page-title">
             <h1>📋 诊疗记录</h1>
-            <p>查看您的所有诊疗结果</p>
+            <p>查看您的所有就诊诊断结果</p>
         </div>
 
         <div class="record-list" th:if="${records != null and records.size() > 0}">
@@ -72,24 +70,33 @@
                         <h3>[[${r.doctor.name}]] - [[${r.doctor.title}]]</h3>
                         <p>[[${r.doctor.department.name}]]</p>
                     </div>
-                    <span class="status" th:classappend="${r.status == '已完成' ? 'status-completed' : ''}">
-                        [[${r.status}]]
-                    </span>
                 </div>
 
-                <div th:if="${r.status != '已完成'}" class="record-detail" style="text-align:center;color:#999;">
-                    <span th:if="${r.status == '已取消'}">❌ 预约已取消</span>
-                    <span th:if="${r.status == '待就诊' or r.status == '已确认'}">⏳ 等待医生诊断</span>
+                <div class="record-detail">
+                    <div class="diag-item">
+                        <div class="diag-label">诊断结果</div>
+                        <div class="diag-value" th:if="${r.diagnosis != null and r.diagnosis != ''}">[[${r.diagnosis}]]</div>
+                        <div class="diag-value no-diag" th:unless="${r.diagnosis != null and r.diagnosis != ''}">暂无诊断</div>
+                    </div>
+                    <div class="diag-item">
+                        <div class="diag-label">开具处方</div>
+                        <div class="diag-value" th:if="${r.prescription != null and r.prescription != ''}">[[${r.prescription}]]</div>
+                        <div class="diag-value no-diag" th:unless="${r.prescription != null and r.prescription != ''}">暂无处方</div>
+                    </div>
+                    <div class="diag-item" th:if="${r.note != null and r.note != ''}">
+                        <div class="diag-label">医生备注</div>
+                        <div class="diag-value">[[${r.note}]]</div>
+                    </div>
                 </div>
 
                 <div class="record-meta">
                     <div class="meta-item">
-                        <label>预约日期</label>
-                        <span>[[${r.appointmentDate}]]</span>
+                        <label>就诊日期</label>
+                        <span>[[${r.appointment.appointmentDate}]]</span>
                     </div>
                     <div class="meta-item">
-                        <label>预约时间</label>
-                        <span>[[${r.appointmentTime}]]</span>
+                        <label>就诊时间</label>
+                        <span>[[${r.appointment.appointmentTime}]]</span>
                     </div>
                 </div>
             </div>
@@ -97,8 +104,8 @@
 
         <div class="empty-state" th:if="${records == null or records.size() == 0}">
             <div class="icon">📋</div>
-            <h3>暂无记录</h3>
-            <p>您还没有任何诊疗记录</p>
+            <h3>暂无诊疗记录</h3>
+            <p>您还没有任何诊疗记录，就诊后医生会为您填写诊断结果</p>
             <a href="/departments" class="btn-appoint">立即预约</a>
         </div>
     </div>
