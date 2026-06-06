@@ -121,8 +121,9 @@
         <p>© 2024 医院预约挂号系统 版权所有</p>
     </div>
 
-    <script th:inline="javascript">
-        var doctorId = /*[[${doctor.id}]]*/ document.querySelector('input[name="doctorId"]').value;
+    <script>
+        // 从DOM中读取医生信息，避免依赖Thymeleaf JavaScript内联表达式
+        var doctorId = document.querySelector('input[name="doctorId"]').value;
         var srvStart = /*[[${startTime}]]*/ '';
         var srvEnd   = /*[[${endTime}]]*/ '';
 
