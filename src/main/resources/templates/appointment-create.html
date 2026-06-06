@@ -121,8 +121,8 @@
         <p>© 2024 医院预约挂号系统 版权所有</p>
     </div>
 
-    <script>
-        var doctorId = /*[[${doctor.id}]]*/ 0;
+    <script th:inline="javascript">
+        var doctorId = /*[[${doctor.id}]]*/ document.querySelector('input[name="doctorId"]').value;
         var srvStart = /*[[${startTime}]]*/ '';
         var srvEnd   = /*[[${endTime}]]*/ '';
 
@@ -153,6 +153,12 @@
             document.getElementById('appointmentDate').setAttribute('min', minDate);
 
             document.getElementById('appointmentDate').addEventListener('change', loadBookedSlots);
+
+            // 页面加载时如果日期已有值，自动加载时段（修复表单重新渲染后change不触发的问题）
+            var initialDate = document.getElementById('appointmentDate').value;
+            if (initialDate) {
+                loadBookedSlots();
+            }
         });
 
         function genSlots(startStr, endStr, interval) {
