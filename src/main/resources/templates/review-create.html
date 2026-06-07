@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评价医生 - 医院预约挂号系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 5px; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background 0.3s; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.25); font-weight: bold; }
+        .user-greeting { color: rgba(255,255,255,0.9); margin-right: 10px; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; }
+        .content { max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        .page-title { text-align: center; margin-bottom: 30px; }
+        .page-title h1 { color: #333; font-size: 28px; }
+        .page-title p { color: #666; margin-top: 8px; }
+        .review-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .doctor-brief { text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin-bottom: 25px; }
+        .doctor-brief h3 { color: #333; font-size: 20px; }
+        .doctor-brief p { color: #888; font-size: 14px; margin-top: 4px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #333; }
+        .rating-select { display: flex; gap: 4px; justify-content: center; direction: ltr; }
+        .rating-select input[type="radio"] { display: none; }
+        .rating-select label { font-size: 44px; cursor: pointer; color: #ddd; transition: color 0.2s; user-select: none; line-height: 1; }
+        .rating-select label.hovered,
+        .rating-select label.selected { color: #f1c40f; }
+        .rating-hint { text-align: center; color: #888; font-size: 14px; margin-top: 8px; }
+        .form-group textarea { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; min-height: 120px; transition: border-color 0.3s; }
+        .form-group textarea:focus { border-color: #2E86DE; }
+        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #2E86DE 0%, #1E3A5F 100%); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: opacity 0.3s; }
+        .btn-submit:hover { opacity: 0.9; }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        .alert-error { background: #fce4ec; color: #c62828; border: 1px solid #f8bbd0; }
+        .alert-info { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+        .existing-review { background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .existing-review h4 { color: #333; margin-bottom: 10px; }
+        .existing-review .stars { font-size: 24px; margin-bottom: 8px; }
+        .existing-review .comment { color: #666; font-size: 14px; }
+        .back-link { display: inline-block; margin-top: 20px; color: #2E86DE; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🏥 医院预约挂号系统</div>
+            <div class="nav">
+                <a href="/" class="nav-home">首页</a>
+                <a href="/departments" class="nav-depts">科室导航</a>
+                <a href="/appointments" class="nav-appts">我的预约</a>
+                <a href="/patient/records" class="nav-records">诊疗记录</a>
+                <a href="/profile" class="nav-profile">个人中心</a>
+                <span class="user-greeting">👤 [[${user.name}]]</span>
+                <a href="/logout">退出</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="page-title">
+            <h1>评价医生</h1>
+            <p>分享您的就诊体验，帮助医生提升服务质量</p>
+        </div>
+
+        <div class="review-card">
+            <div class="doctor-brief">
+                <h3>[[${appointment.doctor.name}]] - [[${appointment.doctor.title}]]</h3>
+                <p>[[${appointment.doctor.department.name}]] | 就诊日期：[[${appointment.appointmentDate}]]</p>
+            </div>
+
+            <div th:if="${error != null}" class="alert alert-info">
+                [[${error}]]
+            </div>
+
+            <!-- 已评价则显示已有评价 -->
+            <div th:if="${existing != null}" class="existing-review">
+                <h4>您的评价</h4>
+                <div class="stars">
+                    <span th:each="i : ${#numbers.sequence(1, existing.rating)}">⭐</span>
+                </div>
+                <p class="comment" th:if="${existing.comment != null}">[[${existing.comment}]]</p>
+                <p class="comment" th:if="${existing.comment == null}"><em>未填写评论内容</em></p>
+            </div>
+
+            <form th:if="${existing == null}" action="/review/submit" method="post" onsubmit="return validateForm()">
+                <input type="hidden" name="appointmentId" th:value="${appointment.id}">
+                
+                <div class="form-group">
+                    <label>综合评分</label>
+                    <div class="rating-select" id="ratingSelect">
+                        <input type="radio" name="rating" value="1" id="star1" required>
+                        <label for="star1" data-value="1">&#9733;</label>
+                        <input type="radio" name="rating" value="2" id="star2">
+                        <label for="star2" data-value="2">&#9733;</label>
+                        <input type="radio" name="rating" value="3" id="star3">
+                        <label for="star3" data-value="3">&#9733;</label>
+                        <input type="radio" name="rating" value="4" id="star4">
+                        <label for="star4" data-value="4">&#9733;</label>
+                        <input type="radio" name="rating" value="5" id="star5">
+                        <label for="star5" data-value="5">&#9733;</label>
+                    </div>
+                    <div class="rating-hint" id="ratingHint">请点击星星选择评分</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comment">评价内容 <span style="color:#999;font-weight:normal;">（选填）</span></label>
+                    <textarea id="comment" name="comment" placeholder="请描述您的就诊体验，如医生的诊断水平、服务态度等..." maxlength="500"></textarea>
+                    <div style="text-align:right;color:#999;font-size:12px;margin-top:4px;"><span id="charCount">0</span>/500</div>
+                </div>
+
+                <button type="submit" class="btn-submit">提交评价</button>
+            </form>
+
+            <div th:if="${existing != null}" style="text-align:center;">
+                <a href="/appointments" class="back-link">← 返回预约列表</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 医院预约挂号系统 版权所有</p>
+    </div>
+
+    <script>
+        var ratingSelect = document.getElementById('ratingSelect');
+        var labels = ratingSelect ? ratingSelect.querySelectorAll('label') : [];
+        var ratingHint = document.getElementById('ratingHint');
+        var hints = {5: '非常满意', 4: '满意', 3: '一般', 2: '不满意', 1: '非常不满意'};
+
+        function highlightStars(value) {
+            labels.forEach(function(lbl) {
+                var val = parseInt(lbl.getAttribute('data-value'));
+                lbl.classList.toggle('selected', val <= value);
+                lbl.classList.toggle('hovered', val <= value);
+            });
+        }
+
+        function clearHover() {
+            labels.forEach(function(lbl) {
+                lbl.classList.remove('hovered');
+            });
+            // Re-apply selection based on checked radio
+            var checked = ratingSelect.querySelector('input[type=radio]:checked');
+            if (checked) {
+                var val = parseInt(checked.value);
+                labels.forEach(function(lbl) {
+                    var v = parseInt(lbl.getAttribute('data-value'));
+                    lbl.classList.add('selected', v <= val);
+                });
+            }
+        }
+
+        // Click handler on labels
+        labels.forEach(function(label) {
+            label.addEventListener('click', function(e) {
+                var val = parseInt(this.getAttribute('data-value'));
+                highlightStars(val);
+                ratingHint.textContent = hints[val] || '已评分';
+                // Check the corresponding radio
+                var radio = document.getElementById(this.getAttribute('for'));
+                if (radio) radio.checked = true;
+            });
+
+            // Hover
+            label.addEventListener('mouseenter', function() {
+                var val = parseInt(this.getAttribute('data-value'));
+                labels.forEach(function(lbl) {
+                    var v = parseInt(lbl.getAttribute('data-value'));
+                    lbl.classList.toggle('hovered', v <= val);
+                });
+                ratingHint.textContent = hints[val] || '请点击星星选择评分';
+            });
+
+            label.addEventListener('mouseleave', clearHover);
+        });
+
+        // 字数统计
+        document.getElementById('comment')?.addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        // 表单验证
+        function validateForm() {
+            var checked = ratingSelect ? ratingSelect.querySelector('input[type=radio]:checked') : null;
+            if (!checked) {
+                alert('请选择评分');
+                return false;
+            }
+            return true;
+        }
+
+        // 导航高亮
+        var path = window.location.pathname;
+        if (path.startsWith('/appointment') || path.startsWith('/appointments')) {
+            document.querySelector('.nav-appts')?.classList.add('active');
+        }
+    </script>
+</body>
+</html>

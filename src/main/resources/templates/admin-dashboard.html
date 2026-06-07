@@ -11,7 +11,7 @@
         .header { background: linear-gradient(135deg, #FF6B6B 0%, #C92A2A 100%); color: white; padding: 20px; }
         .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-size: 24px; font-weight: bold; }
-        .nav a { color: white; margin-left: 20px; text-decoration: none; padding: 8px 16px; border-radius: 4px; }
+        .nav a { color: white; margin-left: 20px; text-decoration: none; padding: 8px 16px; border-radius: 4px; display: inline-block; }
         .nav a:hover { background: rgba(255,255,255,0.2); }
         .content { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
         .welcome-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin-bottom: 30px; }
@@ -68,8 +68,10 @@
             <div class="nav">
                 <a href="/admin/dashboard">📊 仪表板</a>
                 <a href="/admin/departments">🏥 科室管理</a>
+                <a href="/admin/doctors">👨‍⚕️ 医生管理</a>
                 <a href="/admin/appointments">📅 预约管理</a>
                 <a href="/admin/users">👥 用户管理</a>
+                <a href="/admin/reviews">📝 评价管理</a>
                 <a href="/admin/statistics">📈 统计</a>
                 <a href="/logout">🚪 退出</a>
             </div>
@@ -194,6 +196,16 @@
                     <div class="icon">👥</div>
                     <h3>用户管理</h3>
                     <p>管理患者和管理员账号</p>
+                </a>
+                <a href="/admin/reviews" class="admin-item">
+                    <div class="icon">📝</div>
+                    <h3>评价管理</h3>
+                    <p>查看所有医生的患者评价</p>
+                </a>
+                <a href="/admin/statistics" class="admin-item">
+                    <div class="icon">📈</div>
+                    <h3>统计</h3>
+                    <p>查看系统运营数据统计</p>
                 </a>
             </div>
         </div>

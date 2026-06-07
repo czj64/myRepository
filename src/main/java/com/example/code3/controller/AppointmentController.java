@@ -3,11 +3,13 @@ package com.example.code3.controller;
 import com.example.code3.entity.Appointment;
 import com.example.code3.entity.Doctor;
 import com.example.code3.entity.MedicalRecord;
+import com.example.code3.entity.Review;
 import com.example.code3.entity.User;
 import com.example.code3.exception.BusinessException;
 import com.example.code3.service.AppointmentService;
 import com.example.code3.service.DoctorService;
 import com.example.code3.service.MedicalRecordService;
+import com.example.code3.service.ReviewService;
 import com.example.code3.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,9 @@ public class AppointmentController {
 
     @Autowired
     private MedicalRecordService medicalRecordService;
+
+    @Autowired
+    private ReviewService reviewService;
 
     @GetMapping("/patient/records")
     public String patientRecords(HttpSession session, Model model) {
@@ -97,14 +102,16 @@ public class AppointmentController {
     @GetMapping("/appointment/booked-slots")
     @ResponseBody
     public List<Map<String, String>> getBookedSlots(@RequestParam Long doctorId,
-                                                     @RequestParam String date) {
+                                                     @RequestParam String date,
+                                                     @RequestParam(required = false) Long excludeId) {
         LocalDate localDate = LocalDate.parse(date);
         List<Appointment> appointments = appointmentService.findByDoctorIdAndDate(doctorId, localDate);
         return appointments.stream()
-                .filter(a -> "待就诊".equals(a.getStatus()) || "已完成".equals(a.getStatus()))
+                .filter(a -> ("待就诊".equals(a.getStatus()) || "已完成".equals(a.getStatus()))
+                        && (excludeId == null || !a.getId().equals(excludeId)))
                 .map(a -> {
                     Map<String, String> m = new HashMap<>();
-                    m.put("time", a.getAppointmentTime().toString());
+                    m.put("time", a.getAppointmentTime().format(DateTimeFormatter.ofPattern("HH:mm")));
                     m.put("status", a.getStatus());
                     return m;
                 })
@@ -304,6 +311,22 @@ public class AppointmentController {
         }
         model.addAttribute("appointment", appointment);
         model.addAttribute("user", user);
+        
+        // 获取该医生在预约日期的已预约时段（排除自身）
+        if (appointment.getDoctor() != null) {
+            Long doctorId = appointment.getDoctor().getId();
+            LocalDate date = appointment.getAppointmentDate();
+            List<Appointment> bookedAppts = appointmentService.findByDoctorIdAndDate(doctorId, date);
+            List<String> bookedTimes = bookedAppts.stream()
+                .filter(a -> ("待就诊".equals(a.getStatus()) || "已完成".equals(a.getStatus()))
+                    && !a.getId().equals(id))
+                .map(a -> a.getAppointmentTime().format(DateTimeFormatter.ofPattern("HH:mm")))
+                .collect(Collectors.toList());
+            model.addAttribute("bookedTimes", bookedTimes);
+        } else {
+            model.addAttribute("bookedTimes", List.of());
+        }
+        
         return "appointment-edit";
     }
 
@@ -357,6 +380,14 @@ public class AppointmentController {
             return "appointment-edit";
         }
 
+        // 检查时间冲突（排除自身）
+        if (appointmentService.hasTimeConflict(doctor.getId(), date, time, id)) {
+            model.addAttribute("appointment", appointment);
+            model.addAttribute("user", user);
+            model.addAttribute("error", "该时间段已被其他患者预约，请选择其他时间");
+            return "appointment-edit";
+        }
+
         appointment.setAppointmentDate(date);
         appointment.setAppointmentTime(time);
         appointment.setPatientName(patientName);
@@ -380,6 +411,78 @@ public class AppointmentController {
             appointment.setStatus("已取消");
             appointmentService.save(appointment);
         }
+        return "redirect:/appointments";
+    }
+
+    // ==================== 患者评价功能 ====================
+
+    @GetMapping("/review/create")
+    public String reviewPage(@RequestParam Long appointmentId, HttpSession session, Model model) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        Appointment appointment = appointmentService.getById(appointmentId);
+        if (appointment == null || !appointment.getUser().getId().equals(user.getId())) {
+            return "redirect:/appointments";
+        }
+        if (!"已完成".equals(appointment.getStatus())) {
+            return "redirect:/appointments";
+        }
+        // 检查是否已评价
+        Review existing = reviewService.findByAppointmentId(appointmentId);
+        if (existing != null) {
+            model.addAttribute("error", "您已经对该预约进行过评价");
+        }
+        model.addAttribute("appointment", appointment);
+        model.addAttribute("existing", existing);
+        model.addAttribute("user", user);
+        return "review-create";
+    }
+
+    @PostMapping("/review/submit")
+    public String submitReview(@RequestParam Long appointmentId,
+                               @RequestParam int rating,
+                               @RequestParam(required = false) String comment,
+                               HttpSession session,
+                               Model model) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        Appointment appointment = appointmentService.getById(appointmentId);
+        if (appointment == null || !appointment.getUser().getId().equals(user.getId())) {
+            return "redirect:/appointments";
+        }
+        if (!"已完成".equals(appointment.getStatus())) {
+            return "redirect:/appointments";
+        }
+        // 防止重复评价
+        Review existing = reviewService.findByAppointmentId(appointmentId);
+        if (existing != null) {
+            model.addAttribute("error", "您已经评价过，不能重复提交");
+            model.addAttribute("appointment", appointment);
+            model.addAttribute("existing", existing);
+            model.addAttribute("user", user);
+            return "review-create";
+        }
+
+        if (rating < 1 || rating > 5) {
+            model.addAttribute("error", "评分必须在1-5星之间");
+            model.addAttribute("appointment", appointment);
+            model.addAttribute("user", user);
+            return "review-create";
+        }
+
+        Review review = new Review();
+        review.setAppointment(appointment);
+        review.setUser(user);
+        review.setDoctor(appointment.getDoctor());
+        review.setRating(rating);
+        review.setComment(comment != null && !comment.trim().isEmpty() ? comment.trim() : null);
+        review.setCreatedAt(java.time.LocalDateTime.now());
+        reviewService.save(review);
+
         return "redirect:/appointments";
     }
 

@@ -10,8 +10,9 @@
         .header { background: linear-gradient(135deg, #FF6B6B 0%, #C92A2A 100%); color: white; padding: 15px 0; }
         .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-size: 20px; font-weight: bold; }
-        .nav a { color: white; text-decoration: none; margin-left: 30px; }
+        .nav a { color: white; text-decoration: none; margin-left: 30px; display: inline-block; }
         .nav a:hover { text-decoration: underline; }
+        
         .content { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         .page-title { margin-bottom: 30px; }
         .page-title h1 { color: #333; font-size: 28px; margin-bottom: 10px; }
@@ -48,8 +49,14 @@
         <div class="header-content">
             <div class="logo">🏥 医院管理系统 - 科室管理</div>
             <div class="nav">
-                <a href="/admin/dashboard">🏠 返回首页</a>
-                <a href="/logout">🚪 退出登录</a>
+                <a href="/admin/dashboard">📊 仪表板</a>
+                <a href="/admin/departments">🏥 科室管理</a>
+                <a href="/admin/doctors">👨‍⚕️ 医生管理</a>
+                <a href="/admin/appointments">📅 预约管理</a>
+                <a href="/admin/users">👥 用户管理</a>
+                <a href="/admin/reviews">📝 评价管理</a>
+                <a href="/admin/statistics">📈 统计</a>
+                <a href="/logout">🚪 退出</a>
             </div>
         </div>
     </div>

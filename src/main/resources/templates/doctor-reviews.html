@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的评价 - 医生工作台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f7f4; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .header-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .header h1 { font-size: 20px; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .header-right a { color: white; text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 6px; transition: background 0.3s; }
+        .header-right a:hover { background: rgba(255,255,255,0.2); }
+        .user-info { font-size: 14px; opacity: 0.9; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px 24px; }
+        .page-header { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .page-header h2 { color: #333; }
+        .page-header .rating-summary { text-align: right; }
+        .page-header .rating-summary .avg { font-size: 28px; font-weight: bold; color: #f39c12; }
+        .page-header .rating-summary .count { color: #888; font-size: 14px; }
+        .review-list { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+        .review-item { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; }
+        .review-item:last-child { border-bottom: none; }
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .review-user { font-weight: 500; color: #333; }
+        .review-stars { color: #f1c40f; font-size: 16px; }
+        .review-date { color: #999; font-size: 12px; }
+        .review-comment { color: #555; font-size: 14px; line-height: 1.6; padding: 12px 0; }
+        .review-appointment { color: #999; font-size: 12px; }
+        .no-reviews { text-align: center; padding: 60px 20px; color: #999; }
+        .no-reviews .icon { font-size: 48px; margin-bottom: 12px; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; }
+        .page-link { padding: 8px 16px; background: #00b894; color: white; text-decoration: none; border-radius: 6px; font-size: 14px; }
+        .page-link:hover { background: #00a381; }
+        .page-info { color: #666; font-size: 14px; }
+        .back-link { display: inline-block; padding: 8px 16px; background: #eee; color: #333; text-decoration: none; border-radius: 6px; font-size: 14px; margin-bottom: 20px; }
+        .back-link:hover { background: #ddd; }
+        .empty-state { text-align: center; padding: 30px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <h1>👨‍⚕️ 医生工作台 - 我的评价</h1>
+            <div class="header-right">
+                <span class="user-info" th:text="${doctor.name} + ' - ' + ${doctor.title}"></span>
+                <a href="/doctor/dashboard">🏠 返回工作台</a>
+                <a href="/logout">🚪 退出登录</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <a href="/doctor/dashboard" class="back-link">← 返回工作台</a>
+
+        <div class="page-header">
+            <h2>📊 患者评价</h2>
+            <div class="rating-summary">
+                <div class="avg" th:text="${avgRating > 0} ? ${#numbers.formatDecimal(avgRating, 1, 1)} + ' ⭐' : '暂无评分'">0.0</div>
+                <div class="count" th:text="'共 ' + ${reviewCount} + ' 条评价'">共 0 条评价</div>
+            </div>
+        </div>
+
+        <div class="review-list" th:if="${reviews != null and reviews.size() > 0}">
+            <div class="review-item" th:each="review : ${reviews}">
+                <div class="review-header">
+                    <span class="review-user">👤 [[${review.user.name}]]</span>
+                    <span class="review-stars">
+                        <span th:each="i : ${#numbers.sequence(1, review.rating)}">⭐</span>
+                        <span th:if="${review.rating < 5}">
+                            <span th:each="i : ${#numbers.sequence(1, 5 - review.rating)}">☆</span>
+                        </span>
+                    </span>
+                    <span class="review-date">[[${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}]]</span>
+                </div>
+                <div class="review-comment" th:if="${review.comment != null and !review.comment.isEmpty()}">
+                    [[${review.comment}]]
+                </div>
+                <div class="review-comment" th:if="${review.comment == null or review.comment.isEmpty()}">
+                    <em style="color:#bbb;">该患者未填写评论内容</em>
+                </div>
+                <div class="review-appointment">
+                    就诊日期：[[${review.appointment.appointmentDate}]] [[${review.appointment.appointmentTime}]]
+                </div>
+            </div>
+        </div>
+
+        <div class="no-reviews" th:if="${reviews == null or reviews.size() == 0}">
+            <div class="icon">📝</div>
+            <h3>暂无患者评价</h3>
+            <p>当患者完成就诊并评价后，将显示在这里</p>
+        </div>
+
+        <div th:if="${reviewPage != null and reviewPage.totalPages > 1}" class="pagination">
+            <a th:if="${!reviewPage.first}" th:href="@{/doctor/reviews(page=${reviewPage.number - 1})}" class="page-link">← 上一页</a>
+            <span class="page-info">第 [[${reviewPage.number + 1}]] / [[${reviewPage.totalPages}]] 页</span>
+            <a th:if="${!reviewPage.last}" th:href="@{/doctor/reviews(page=${reviewPage.number + 1})}" class="page-link">下一页 →</a>
+        </div>
+    </div>
+</body>
+</html>

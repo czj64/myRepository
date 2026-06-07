@@ -81,11 +81,14 @@
                 <p>坐诊时间：[[${appointment.doctor.availableTime}]]</p>
             </div>
             <span id="availTimeText" style="display:none;">[[${appointment.doctor.availableTime}]]</span>
+            <input type="hidden" id="doctorIdInput" th:value="${appointment.doctor.id}">
 
             <div class="current-slot" id="currentSlot">
                 📅 当前预约：<strong th:text="${appointment.appointmentDate}"></strong>
                 <strong th:text="${appointment.appointmentTime}"></strong>
             </div>
+            <span id="currentInfo" style="display:none;"
+                  th:attr="data-date=${appointment.appointmentDate},data-time=${appointment.appointmentTime}"></span>
 
             <form action="/appointment/update" method="post" id="editForm">
                 <input type="hidden" name="id" th:value="${appointment.id}">
@@ -135,11 +138,14 @@
     </div>
 
     <script>
-        var doctorId = /*[[${appointment.doctor.id}]]*/ 0;
-        var origDate  = /*[[${appointment.appointmentDate}]]*/ '';
-        var origTime  = /*[[${appointment.appointmentTime}]]*/ '';
+        var doctorId = document.getElementById('doctorIdInput').value;
         var DAYS_CN   = ['周日','周一','周二','周三','周四','周五','周六'];
         var DAYS_EN   = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+        // 当前预约信息（用于高亮原时段）
+        var infoEl = document.getElementById('currentInfo');
+        var origDate = infoEl ? infoEl.getAttribute('data-date') : '';
+        var origTime = infoEl ? infoEl.getAttribute('data-time') : '';
 
         document.addEventListener('DOMContentLoaded', function() {
             var el = document.getElementById('availTimeText');
@@ -157,10 +163,17 @@
                 String(today.getDate()).padStart(2, '0');
             var dateInput = document.getElementById('appointmentDate');
             dateInput.setAttribute('min', minDate);
+
+            // 修复：如果 th:value 未正确设置日期值，用 origDate 回退
+            if (origDate && !dateInput.value) {
+                dateInput.value = origDate;
+            }
+
             dateInput.addEventListener('change', loadSlots);
 
-            // 页面加载后，预加载当天（如果原日期匹配）的时段
-            if (origDate === dateInput.value) {
+            // 页面加载后如果日期已有值，自动加载时段
+            var initialDate = dateInput.value;
+            if (initialDate) {
                 loadSlots();
             }
         });
@@ -194,56 +207,73 @@
         }
 
         async function loadSlots() {
-            var dateVal = document.getElementById('appointmentDate').value;
-            var grid = document.getElementById('slotGrid');
-            var submitBtn = document.getElementById('submitBtn');
-            var timeInput = document.getElementById('appointmentTime');
-
-            if (!dateVal) { grid.innerHTML='<p class="slot-hint">请先选择预约日期</p>'; return; }
-            if (!isDocAvail(dateVal)) {
-                grid.innerHTML='<p class="slot-hint" style="color:#c62828;">该日期医生不坐诊，请选择其他日期</p>';
-                return;
-            }
-            if (!window._timeStart || !window._timeEnd) {
-                grid.innerHTML='<p class="slot-hint">无法解析医生坐诊时间</p>'; return;
-            }
-
             try {
-                var bookedTimes = {};
-                try {
-                    var resp = await fetch('/appointment/booked-slots?doctorId='+doctorId+'&date='+dateVal);
-                    if (resp.ok) {
-                        var data = await resp.json();
-                        data.forEach(function(b) {
-                            // 排除自己当前的预约（修改时不应显示为已占用）
-                            if (dateVal===origDate && String(b.time).substring(0,5)===origTime.substring(0,5)) return;
-                            bookedTimes[String(b.time).substring(0,5)] = b.status;
-                        });
-                    }
-                } catch(e) {}
+                var dateVal = document.getElementById('appointmentDate').value;
+                var grid = document.getElementById('slotGrid');
+                var submitBtn = document.getElementById('submitBtn');
+                var timeInput = document.getElementById('appointmentTime');
 
-                var slots = genSlots(window._timeStart, window._timeEnd, 60);
-                var html = '';
-                slots.forEach(function(s) {
-                    var booked = s.time in bookedTimes;
-                    var isOrig = (dateVal===origDate && s.time===origTime.substring(0,5));
-                    var cls = booked ? 'slot-btn booked' : (isOrig ? 'slot-btn selected' : 'slot-btn');
-                    html += '<button type="button" class="'+cls+'" data-time="'+s.time+'"'
-                          + (booked?' disabled':'') + '>' + s.label + '</button>';
-                });
-                if (slots.length===0) html = '<p class="slot-hint">该日期不坐诊</p>';
+                if (!dateVal) { grid.innerHTML='<p class="slot-hint">请先选择预约日期</p>'; return; }
+                if (!isDocAvail(dateVal)) {
+                    grid.innerHTML='<p class="slot-hint" style="color:#c62828;">该日期医生不坐诊，请选择其他日期</p>';
+                    return;
+                }
+                if (!window._timeStart || !window._timeEnd) {
+                    grid.innerHTML='<p class="slot-hint">无法解析医生坐诊时间</p>'; return;
+                }
+
+                // 使用接口获取已预约时段（含当前预约自身，前端区分处理）
+            var bookedTimes = {};
+            try {
+                var url = '/appointment/booked-slots?doctorId=' + doctorId + '&date=' + dateVal;
+                var resp = await fetch(url);
+                if (resp.ok) {
+                    var data = await resp.json();
+                    console.log('booked-slots response:', JSON.stringify(data));
+                    data.forEach(function(b) {
+                        bookedTimes[String(b.time)] = true;
+                    });
+                } else {
+                    console.error('获取已预约时段失败:', resp.status, resp.statusText);
+                }
+            } catch (e) {
+                console.error('获取已预约时段异常:', e);
+            }
+
+            var slots = genSlots(window._timeStart, window._timeEnd, 60);
+            var html = '';
+            slots.forEach(function(s) {
+                var booked = s.time in bookedTimes;
+                var isOrig = (dateVal === origDate && origTime && s.time === origTime.substring(0, 5));
+                // 当前预约的原始时段优先显示为蓝色选中态，而非红色已约满
+                var cls, disabled;
+                if (isOrig) {
+                    cls = 'slot-btn selected';
+                    disabled = false;
+                } else if (booked) {
+                    cls = 'slot-btn booked';
+                    disabled = true;
+                } else {
+                    cls = 'slot-btn';
+                    disabled = false;
+                }
+                html += '<button type="button" class="' + cls + '" data-time="' + s.time + '"'
+                      + (disabled ? ' disabled' : '') + '>' + s.label + '</button>';
+            });
+                if (slots.length === 0) html = '<p class="slot-hint">该日期不坐诊</p>';
                 grid.innerHTML = html;
 
                 grid.querySelectorAll('.slot-btn:not(.booked)').forEach(function(btn) {
                     btn.addEventListener('click', function() {
-                        grid.querySelectorAll('.slot-btn').forEach(function(b){b.classList.remove('selected');});
+                        grid.querySelectorAll('.slot-btn').forEach(function(b) { b.classList.remove('selected'); });
                         btn.classList.add('selected');
                         timeInput.value = btn.dataset.time;
                         submitBtn.textContent = '确认修改 ' + btn.dataset.time;
                     });
                 });
-            } catch(err) {
-                grid.innerHTML = '<p class="slot-hint" style="color:#c62828;">加载时段失败，请重试</p>';
+            } catch (e) {
+                console.error('loadSlots 异常:', e);
+                document.getElementById('slotGrid').innerHTML = '<p class="slot-hint" style="color:#c62828;">加载时段失败，请刷新页面重试</p>';
             }
         }
 

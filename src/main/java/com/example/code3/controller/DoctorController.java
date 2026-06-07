@@ -291,4 +291,24 @@ public class DoctorController {
         model.addAttribute("success", "个人信息更新成功");
         return "doctor-profile";
     }
+
+    // ==================== 医生查看评价 ====================
+
+    @GetMapping("/doctor/reviews")
+    public String doctorReviews(@RequestParam(defaultValue = "0") int page,
+                                HttpSession session, Model model) {
+        if (!isDoctor(session, model)) return "redirect:/doctor-login";
+        Doctor doctor = getCurrentDoctor(session);
+        if (doctor == null) return "redirect:/doctor-login";
+
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<Review> reviewPage = reviewService.findReviewsByDoctorId(doctor.getId(), pageable);
+        double avgRating = reviewService.getAverageRating(doctor.getId());
+
+        model.addAttribute("reviews", reviewPage.getContent());
+        model.addAttribute("reviewPage", reviewPage);
+        model.addAttribute("avgRating", avgRating);
+        model.addAttribute("reviewCount", reviewPage.getTotalElements());
+        return "doctor-reviews";
+    }
 }

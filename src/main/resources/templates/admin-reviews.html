@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评价管理 - 后台管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #FF6B6B 0%, #C92A2A 100%); color: white; padding: 20px; }
+        .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 20px; text-decoration: none; padding: 8px 16px; border-radius: 4px; display: inline-block; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.25); font-weight: bold; }
+        
+        .content { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .page-title { margin-bottom: 30px; }
+        .page-title h1 { color: #333; font-size: 28px; }
+        .page-title p { color: #666; margin-top: 5px; }
+        .filter-bar { background: white; padding: 16px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+        .filter-bar label { color: #555; font-weight: 500; }
+        .filter-bar select { padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none; }
+        .filter-bar select:focus { border-color: #FF6B6B; }
+        .filter-bar .btn-filter { padding: 8px 20px; background: #FF6B6B; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .filter-bar .btn-filter:hover { background: #e55a5a; }
+        .filter-bar .btn-reset { padding: 8px 20px; background: #eee; color: #333; text-decoration: none; border-radius: 6px; font-size: 14px; }
+        .review-table { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #fafafa; color: #555; font-weight: 600; font-size: 14px; }
+        td { font-size: 14px; }
+        .stars { color: #f1c40f; }
+        .review-comment-cell { max-width: 300px; }
+        .review-comment-cell p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #666; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; display: inline-block; }
+        .status-high-rating { background: #e8f5e9; color: #2e7d32; }
+        .status-mid-rating { background: #fff3e0; color: #e65100; }
+        .status-low-rating { background: #fce4ec; color: #c62828; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; }
+        .page-link { padding: 10px 20px; background: #FF6B6B; color: white; text-decoration: none; border-radius: 8px; font-size: 14px; }
+        .page-link:hover { background: #e55a5a; }
+        .page-info { color: #666; font-size: 14px; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+        .footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🏥 医院管理系统 - 管理员后台</div>
+            <div class="nav">
+                <a href="/admin/dashboard">📊 仪表板</a>
+                <a href="/admin/departments">🏥 科室管理</a>
+                <a href="/admin/doctors">👨‍⚕️ 医生管理</a>
+                <a href="/admin/appointments">📅 预约管理</a>
+                <a href="/admin/users">👥 用户管理</a>
+                <a href="/admin/reviews" class="active">📝 评价管理</a>
+                <a href="/admin/statistics">📈 统计</a>
+                <a href="/logout">🚪 退出</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="page-title">
+            <h1>📝 评价管理</h1>
+            <p>查看和管理所有患者的就诊评价</p>
+        </div>
+
+        <div class="filter-bar">
+            <label>按医生筛选：</label>
+            <form method="get" action="/admin/reviews" style="display:flex;gap:8px;align-items:center;">
+                <select name="doctorId">
+                    <option value="">-- 全部医生 --</option>
+                    <option th:each="doc : ${allDoctors}" th:value="${doc.id}" th:text="${doc.name} + ' - ' + ${doc.title}" th:selected="${filterDoctor != null and filterDoctor.id == doc.id}"></option>
+                </select>
+                <button type="submit" class="btn-filter">筛选</button>
+                <a href="/admin/reviews" class="btn-reset" th:if="${filterDoctor != null}">清除筛选</a>
+            </form>
+        </div>
+
+        <div class="review-table" th:if="${reviews != null and reviews.size() > 0}">
+            <table>
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>患者</th>
+                        <th>医生</th>
+                        <th>评分</th>
+                        <th>评价内容</th>
+                        <th>就诊日期</th>
+                        <th>评价时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="review, iter : ${reviews}">
+                        <td th:text="${reviewPage.number * reviewPage.size + iter.index + 1}">1</td>
+                        <td>[[${review.user.name}]]</td>
+                        <td>[[${review.doctor.name}]]</td>
+                        <td>
+                            <span class="stars">
+                                <span th:each="i : ${#numbers.sequence(1, review.rating)}">⭐</span>
+                            </span>
+                            <span class="status-badge" th:classappend="${review.rating >= 4} ? 'status-high-rating' : (${review.rating >= 3} ? 'status-mid-rating' : 'status-low-rating')" th:text="${review.rating} + '分'"></span>
+                        </td>
+                        <td class="review-comment-cell">
+                            <p th:if="${#strings.length(review.comment) > 0}" th:title="${review.comment}" th:text="${review.comment}">评价内容</p>
+                            <p th:if="${#strings.length(review.comment) == 0}" style="color:#bbb;"><em>未填写</em></p>
+                        </td>
+                        <td>[[${review.appointment.appointmentDate}]]</td>
+                        <td>[[${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}]]</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="empty-state" th:if="${reviews == null or reviews.size() == 0}">
+            <div class="icon">📝</div>
+            <h3>暂无评价记录</h3>
+            <p th:if="${filterDoctor != null}">该医生尚未收到患者评价</p>
+            <p th:if="${filterDoctor == null}">系统中还没有任何评价记录</p>
+        </div>
+
+        <div th:if="${reviewPage != null and reviewPage.totalPages > 1}" class="pagination">
+            <a th:if="${!reviewPage.first}" th:href="@{/admin/reviews(page=${reviewPage.number - 1}, doctorId=${filterDoctor?.id})}" class="page-link">← 上一页</a>
+            <span class="page-info">第 [[${reviewPage.number + 1}]] / [[${reviewPage.totalPages}]] 页（共 [[${reviewPage.totalElements}]] 条）</span>
+            <a th:if="${!reviewPage.last}" th:href="@{/admin/reviews(page=${reviewPage.number + 1}, doctorId=${filterDoctor?.id})}" class="page-link">下一页 →</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2024 医院预约挂号系统 版权所有</p>
+    </div>
+</body>
+</html>

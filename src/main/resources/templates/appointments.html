@@ -130,6 +130,7 @@
                 </div>
                 <div class="action-buttons" th:if="${appointment.status == '已完成'}">
                     <a href="/patient/records" class="btn-edit">📋 查看诊疗记录</a>
+                    <a th:href="@{/review/create(appointmentId=${appointment.id})}" class="btn-edit" style="background:#f39c12;">⭐ 评价医生</a>
                 </div>
             </div>
         </div>

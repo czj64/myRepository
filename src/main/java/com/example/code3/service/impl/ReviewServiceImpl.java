@@ -4,10 +4,11 @@ import com.example.code3.entity.Review;
 import com.example.code3.repository.ReviewRepository;
 import com.example.code3.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -45,5 +46,32 @@ public class ReviewServiceImpl implements ReviewService {
                 .mapToInt(Review::getRating)
                 .average()
                 .orElse(0.0);
+    }
+    
+    @Override
+    public double getOverallAverageRating() {
+        List<Review> all = reviewRepository.findAll();
+        if (all.isEmpty()) return 0.0;
+        return all.stream().mapToInt(Review::getRating).average().orElse(0.0);
+    }
+    
+    @Override
+    public Page<Review> findAllReviews(Pageable pageable) {
+        return reviewRepository.findAllByOrderByCreatedAtDesc(pageable);
+    }
+    
+    @Override
+    public Page<Review> findReviewsByDoctorId(Long doctorId, Pageable pageable) {
+        return reviewRepository.findByDoctorId(doctorId, pageable);
+    }
+    
+    @Override
+    public long count() {
+        return reviewRepository.count();
+    }
+    
+    @Override
+    public long countByRating(Integer rating) {
+        return reviewRepository.countByRating(rating);
     }
 }

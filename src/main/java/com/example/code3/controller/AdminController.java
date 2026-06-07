@@ -3,10 +3,12 @@ package com.example.code3.controller;
 import com.example.code3.entity.Appointment;
 import com.example.code3.entity.Department;
 import com.example.code3.entity.Doctor;
+import com.example.code3.entity.Review;
 import com.example.code3.entity.User;
 import com.example.code3.service.AppointmentService;
 import com.example.code3.service.DepartmentService;
 import com.example.code3.service.DoctorService;
+import com.example.code3.service.ReviewService;
 import com.example.code3.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 管理员控制器 - 处理所有管理员后台功能
@@ -39,6 +45,9 @@ public class AdminController {
     
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ReviewService reviewService;
     
     /**
      * 检查是否是管理员
@@ -327,29 +336,90 @@ public class AdminController {
     public String statistics(HttpSession session, Model model) {
         if (!isAdmin(session, model)) return "redirect:/admin-login";
         
-        LocalDate today = LocalDate.now();
-        List<Appointment> todayList = appointmentService.findByDate(today);
-        long todayPending = todayList.stream().filter(a -> "待就诊".equals(a.getStatus())).count();
-        long todayConfirmed = todayList.stream().filter(a -> "已确认".equals(a.getStatus())).count();
-        long todayCompleted = todayList.stream().filter(a -> "已完成".equals(a.getStatus())).count();
-        long todayCancelled = todayList.stream().filter(a -> "已取消".equals(a.getStatus())).count();
-
-        model.addAttribute("doctorCount", doctorService.findAll().size());
-        model.addAttribute("departmentCount", departmentService.findAll().size());
-        model.addAttribute("appointmentCount", appointmentService.findAll().size());
-        model.addAttribute("patientCount", userService.countByRole(0));
-        model.addAttribute("todayAppointmentCount", todayList.size());
+        // 评价统计
+        long totalReviews = reviewService.count();
+        double avgRating = reviewService.getOverallAverageRating();
+        long fiveStarCount = reviewService.countByRating(5);
+        long fourStarCount = reviewService.countByRating(4);
+        long threeStarCount = reviewService.countByRating(3);
+        long twoStarCount = reviewService.countByRating(2);
+        long oneStarCount = reviewService.countByRating(1);
+        long positiveCount = fiveStarCount + fourStarCount; // 4-5星好评
+        double positiveRate = totalReviews > 0 ? (double) positiveCount / totalReviews * 100 : 0.0;
         
-        model.addAttribute("pendingCount", appointmentService.countByStatus("待就诊"));
-        model.addAttribute("confirmedCount", appointmentService.countByStatus("已确认"));
-        model.addAttribute("completedCount", appointmentService.countByStatus("已完成"));
-        model.addAttribute("cancelledCount", appointmentService.countByStatus("已取消"));
+        model.addAttribute("totalReviews", totalReviews);
+        model.addAttribute("avgRating", avgRating);
+        model.addAttribute("fiveStarCount", fiveStarCount);
+        model.addAttribute("fourStarCount", fourStarCount);
+        model.addAttribute("threeStarCount", threeStarCount);
+        model.addAttribute("twoStarCount", twoStarCount);
+        model.addAttribute("oneStarCount", oneStarCount);
+        model.addAttribute("positiveRate", positiveRate);
         
-        model.addAttribute("todayPending", todayPending);
-        model.addAttribute("todayConfirmed", todayConfirmed);
-        model.addAttribute("todayCompleted", todayCompleted);
-        model.addAttribute("todayCancelled", todayCancelled);
+        // 各科室预约量统计（已完成+待就诊）
+        List<Department> departments = departmentService.findAll();
+        List<Appointment> allAppts = appointmentService.findAll();
+        Map<Long, Long> deptApptCount = new HashMap<>();
+        Map<String, Long> deptNameCount = new LinkedHashMap<>();
+        
+        for (Department dept : departments) {
+            long count = allAppts.stream()
+                .filter(a -> a.getDoctor() != null && a.getDoctor().getDepartment() != null
+                    && a.getDoctor().getDepartment().getId().equals(dept.getId()))
+                .count();
+            if (count > 0) {
+                deptNameCount.put(dept.getName(), count);
+            }
+        }
+        
+        // 医生评分排行（取前10）
+        List<Doctor> allDoctors = doctorService.findAll();
+        List<Map<String, Object>> doctorRatingList = new ArrayList<>();
+        for (Doctor doc : allDoctors) {
+            double dAvg = reviewService.getAverageRating(doc.getId());
+            if (dAvg > 0) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("name", doc.getName());
+                m.put("rating", dAvg);
+                m.put("dept", doc.getDepartment() != null ? doc.getDepartment().getName() : "");
+                doctorRatingList.add(m);
+            }
+        }
+        doctorRatingList.sort((a, b) -> Double.compare((double) b.get("rating"), (double) a.get("rating")));
+        if (doctorRatingList.size() > 10) {
+            doctorRatingList = doctorRatingList.subList(0, 10);
+        }
+        
+        model.addAttribute("deptApptNames", deptNameCount.keySet());
+        model.addAttribute("deptApptCounts", deptNameCount.values());
+        model.addAttribute("doctorRatingList", doctorRatingList);
         
         return "admin-statistics";
+    }
+
+    // ==================== 评价管理 ====================
+
+    @GetMapping("/admin/reviews")
+    public String reviewList(@RequestParam(defaultValue = "0") int page,
+                             @RequestParam(required = false) Long doctorId,
+                             HttpSession session, Model model) {
+        if (!isAdmin(session, model)) return "redirect:/admin-login";
+
+        Pageable pageable = PageRequest.of(page, 15);
+        Page<Review> reviewPage;
+        if (doctorId != null) {
+            reviewPage = reviewService.findReviewsByDoctorId(doctorId, pageable);
+            Doctor doctor = doctorService.getById(doctorId);
+            model.addAttribute("filterDoctor", doctor);
+        } else {
+            reviewPage = reviewService.findAllReviews(pageable);
+        }
+
+        List<Doctor> allDoctors = doctorService.findAll();
+
+        model.addAttribute("reviews", reviewPage.getContent());
+        model.addAttribute("reviewPage", reviewPage);
+        model.addAttribute("allDoctors", allDoctors);
+        return "admin-reviews";
     }
 }

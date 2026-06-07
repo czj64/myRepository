@@ -104,6 +104,11 @@
                 <h3>个人信息</h3>
                 <p>修改密码与联系方式</p>
             </a>
+            <a href="/doctor/reviews" class="module-card">
+                <div class="module-icon">⭐</div>
+                <h3>我的评价</h3>
+                <p>查看患者评价与评分</p>
+            </a>
         </div>
         <div class="today-section" th:if="${!#lists.isEmpty(todayAppointments)}">
             <h3>📋 今日预约患者 (<span th:text="${#lists.size(todayAppointments)}"></span>人)</h3>
